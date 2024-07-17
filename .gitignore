@@ -19,3 +19,14 @@ z80as/*.o
 z80as/*.obj
 zas/*.o
 zas/*.obj
+cgen/cgen
+cpm/cpm
+cpp/cpp
+huff/dehuff
+huff/enhuff
+link/link
+objtohex/objtohex
+optim/optim
+p1/p1
+z80as/z80as.com
+zas/zas

@@ -1,0 +1,21 @@
+# Ignore object files in specific directories
+cgen/*.o
+cgen/*.obj
+cpm/*.o
+cpm/*.obj
+cpp/*.o
+cpp/*.obj
+huff/*.o
+huff/*.obj
+link/*.o
+link/*.obj
+objtohex/*.o
+objtohex/*.obj
+optim/*.o
+optim/*.obj
+p1/*.o
+p1/*.obj
+z80as/*.o
+z80as/*.obj
+zas/*.o
+zas/*.obj

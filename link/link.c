@@ -195,7 +195,7 @@ int main(int argc, char **argv)
 
             case 'W':
             case 'w': /* Specify map width */
-                if (!isdigit(*pOption) != 0)
+                if (!(isdigit(*pOption)))
                     fatalErr("Missing arg to -w");
                 else
                 {

@@ -319,7 +319,7 @@ void *sbrk(int);
  * original binary image of CGEN.COM
 
  ****************************************************************/
-#ifdef __unix__
+#ifndef CPM
 int fgetchar(void);
 int fputchar(int);
 #endif

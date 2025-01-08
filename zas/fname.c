@@ -1,8 +1,10 @@
-#ifdef __unix__
-#define DIRSEP "/"
-#endif
-
 #include <string.h>
+
+#ifdef __GNUC__
+#define DIRSEP "/"
+#else
+#define DIRSEP "\\"
+#endif
 
 #ifdef CPM
 char *fname(char *name) {
@@ -12,8 +14,9 @@ char *fname(char *name) {
 #else
 char *fname(char *name) {
     char *t;
-    while ((t = strpbrk(name, DIRSEP)))
+    while ((t = strpbrk(name, DIRSEP))) {
         name = t + 1;
+    }
     return name;
 }
 #endif

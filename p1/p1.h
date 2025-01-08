@@ -8,7 +8,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __unix__
+#ifdef __GNUC__
 #include <unistd.h>
 #define _MAX_PATH PATH_MAX
 #endif
@@ -382,7 +382,7 @@ void emitAttr(register attr_t *st);
 
 #define initMemAddr()
 
-#ifdef CPM
+#ifdef __GNUC__
 extern char _Hbss;
 #define inData(p) (((char *)p) < &_Hbss)
 #else

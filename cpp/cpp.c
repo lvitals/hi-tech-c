@@ -916,7 +916,7 @@ STATIC char *doincl(register char *p) {
             strcpy(nfil, filname);
         else {
             strcpy(nfil, *dirp);
-#if defined(__unix__)
+#if defined(__GNUC__)
             if (*fname(nfil))
                 strcat(nfil, "/");
 #endif
@@ -1686,7 +1686,7 @@ STATIC char *subst(register char *p, struct symtab *sp) {
         if (params != 0)
             ppwarn(match, sp->name);
         while (--params >= 0)
-            *pa++ = "" + 1; /* null string for missing actuals */
+            *pa++ = &""[1]; /* null string for missing actuals */
         --flslvl;
         fasscan();
     }

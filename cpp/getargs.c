@@ -33,7 +33,9 @@ static char *name, *str, *bp;
 static size_t bpSize;
 static char interactive;
 _Noreturn static void error(char *, ...);
+#ifdef CPM
 static void *alloc();
+#endif
 static char nxtch();
 static bool iswild(char c);
 static bool isseparator(char c);
@@ -123,7 +125,15 @@ char **_getargs(char *_str, char *_name)
                     {
                         if (match(pattern, entry->d_name))
                         {
+#ifndef CPM
+
+                            argbuf[argc] = malloc(ap - buf + strlen(entry->d_name) + 1);
+
+#else
+
                             argbuf[argc] = alloc(ap - buf + strlen(entry->d_name) + 1);
+
+#endif
                             strcpy(argbuf[argc], buf);
                             strcat(argbuf[argc++], entry->d_name);
                         }
@@ -136,13 +146,32 @@ char **_getargs(char *_str, char *_name)
         }
         else
         {
+
+#ifndef CPM
+
+            strcpy(argbuf[argc++] = malloc(ap - buf + 1), buf);
+
+#else
+
             strcpy(argbuf[argc++] = alloc(ap - buf + 1), buf);
+
+#endif
         }
     }
 
     _argc_ = argc;
     argbuf[argc++] = NULL;
+
+#ifndef CPM
+
+    argv = malloc(argc * sizeof *argv);
+
+#else
+
     argv = alloc(argc * sizeof *argv);
+
+#endif
+
     memcpy(argv, argbuf, argc * sizeof *argv);
 
     return argv;
@@ -187,6 +216,7 @@ _Noreturn static void error(char *s, ...)
     exit(-1);
 }
 
+#ifdef CPM
 static void *alloc(size_t n)
 {
     void *bp;
@@ -195,6 +225,7 @@ static void *alloc(size_t n)
         error("no room for arguments", 0);
     return bp;
 }
+#endif
 
 /* check for wild card in file name
    wildcard in path is not supported

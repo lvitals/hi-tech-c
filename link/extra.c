@@ -13,9 +13,12 @@
 static char libdir[_MAX_PATH];
 static char *fpath;
 
-#ifdef __unix__
+#ifdef __GNUC__
 #define DIRSEP "/"
 #define DIRSEPCH "/"
+#else
+#define DIRSEP "\\"
+#define DIRSEPCH "\\"
 #endif
 
 #define LIB80 "lib80" DIRSEPCH

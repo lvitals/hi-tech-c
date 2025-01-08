@@ -1,3 +1,9 @@
+#ifndef CPM
+#include <unistd.h>
+#include <stdio.h>
+#endif
+
+
 #include "p1.h"
 
 char *tmpFile = "p1.tmp"; /* 91db */

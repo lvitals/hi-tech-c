@@ -9,7 +9,7 @@ kwd_t kwd[] = {
     {")",      T_RPAREN,   1   },  /* 3   */
     {"*",      T_MULT,     6   },  /* 4   */
     {"+",      T_PLUS,     5   },  /* 5   */
-    {"",       T_COMMA,  0   },  /* 6   */
+    {"",       T_COMMA,    0   },  /* 6   */
     {"-",      T_MINUS,    5   },  /* 7   */
     {".and.",  G_AND,      4   },  /* 8   */
     {".eq.",   G_EQ,       2   },  /* 9   */
@@ -303,7 +303,8 @@ kwd_t *psectHashtab[] = {
     if valid in pos 1, the bit 0 is clear, if valid in pos 2, bit 1 is clear ...
     note this limits to 8 char keywords
 */
-static kwd_t *findKwd(register char *s) {
+static kwd_t *findKwd(register char *s)
+{
     kwd_t **probe;
     uint16_t hashIndex;
     int probeStep;
@@ -312,10 +313,11 @@ static kwd_t *findKwd(register char *s) {
 
     hashIndex = 0;
     probeStep = 1;
-    name      = s;
+    name = s;
     hashIndex = 0;
     chBitMask = 1; /* this is used as a */
-    while (*s) {
+    while (*s)
+    {
         if ((invalidChars[*s & 0x7f] & chBitMask) != 0) /* char not allowed here for valid kwd */
             return NULL;
         hashIndex >>= 2; /* update the hash with this char */
@@ -324,7 +326,8 @@ static kwd_t *findKwd(register char *s) {
         chBitMask <<= 1;
     }
     probe = kwdHashtab + hashIndex % MAX_OPERATORS;
-    while (*probe && strcmp(name, (*probe)->name) != 0) { /* done it no more or found */
+    while (*probe && strcmp(name, (*probe)->name) != 0)
+    { /* done it no more or found */
         probe += probeStep;
         probeStep += 2;
         if (probe >= kwdHashtab + MAX_OPERATORS) /* wrap around */
@@ -337,7 +340,8 @@ static kwd_t *findKwd(register char *s) {
  65	findPsect +++
  **************************************************************************/
 /* similar hash model to findKwd, but doesn't do the valid char precheck */
-static kwd_t *findPsect(register char *s) {
+static kwd_t *findPsect(register char *s)
+{
     kwd_t **probe;
     uint16_t hashIndex;
     int probeStep;
@@ -345,14 +349,16 @@ static kwd_t *findPsect(register char *s) {
 
     hashIndex = 0;
     probeStep = 1;
-    name      = s;
-    while (*s) {
+    name = s;
+    while (*s)
+    {
         hashIndex >>= 2;
         hashIndex += (*s << 9);
         ++s;
     }
     probe = psectHashtab + hashIndex % MAX_PSECT;
-    while (*probe && (strcmp(name, (*probe)->name) != 0)) {
+    while (*probe && (strcmp(name, (*probe)->name) != 0))
+    {
         probe += probeStep;
         probeStep += 2;
         if (probe >= psectHashtab + MAX_PSECT)
@@ -364,13 +370,15 @@ static kwd_t *findPsect(register char *s) {
 /**************************************************************************
  66	getTokenId	+++
  **************************************************************************/
-static int16_t getTokenId(register char *s, kwdfptr funptr) {
+static int16_t getTokenId(register char *s, kwdfptr funptr)
+{
     char *t;
     kwd_t *po;
     char buf[80];
 
     t = buf;
-    while (*s) { /* ? optimise loop expression to *t++ = tolower(*s); s++ */
+    while (*s)
+    { /* ? optimise loop expression to *t++ = tolower(*s); s++ */
         if (Isupper(*s))
             *t++ = 0x20 + *s++;
         else
@@ -386,13 +394,15 @@ static int16_t getTokenId(register char *s, kwdfptr funptr) {
 /**************************************************************************
  67	getKwdId	+++
  **************************************************************************/
-int16_t getKwdId(char *s) {
+int16_t getKwdId(char *s)
+{
     return getTokenId(s, findKwd);
 }
 
 /**************************************************************************
  68	getPsectId	+++
  **************************************************************************/
-int16_t getPsectId(char *s) {
+int16_t getPsectId(char *s)
+{
     return getTokenId(s, findPsect);
 }

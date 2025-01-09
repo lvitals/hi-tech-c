@@ -3,19 +3,22 @@
 /**************************************************************************
  56 2c1b +++
  **************************************************************************/
-void parseParamAndBody(register sym_t *ps) {
+void parseParamAndBody(register sym_t *ps)
+{
     sym_t *var2;
     sym_t *var3e[30];
     uint16_t cntParam;
     int16_t var42, tok;
 
     cntParam = 0;
-    while ((tok = yylex()) != T_EOL) {
+    while ((tok = yylex()) != T_EOL)
+    {
         if (tok == T_COMMA)
             tok = yylex();
         if (tok != G_SYM)
             syntaxErr();
-        else {
+        else
+        {
             var2 = yylval.ySym;
             if (var2->sFlags & S_UNDEF)
                 remSym(var2);
@@ -27,8 +30,10 @@ void parseParamAndBody(register sym_t *ps) {
             var3e[cntParam++] = var2;
         }
     }
-    if (phase != 0) {
-        if (ps->mArgs) {
+    if (phase != 0)
+    {
+        if (ps->mArgs)
+        {
             for (var42 = 0; var42 < ps->mArgCnt;)
                 free(ps->mArgs[var42++]);
             free(ps->mArgs);
@@ -36,9 +41,11 @@ void parseParamAndBody(register sym_t *ps) {
         if (cntParam != ps->mArgCnt)
             error("Phase error in macro args");
     }
-    if (cntParam) {
+    if (cntParam)
+    {
         ps->mArgs = xalloc(cntParam * sizeof(sym_t));
-    } else
+    }
+    else
         ps->mArgs = 0;
     ps->mArgCnt = cntParam;
     while (cntParam--)
@@ -49,11 +56,14 @@ void parseParamAndBody(register sym_t *ps) {
 /**************************************************************************
 57 2dc5
 **************************************************************************/
-void parseMacroCall(register sym_t *ps) {
+void parseMacroCall(register sym_t *ps)
+{
     int var2;
     char *var4;
-    if (ps->sFlags & S_MACRO) {
-        for (var2 = 0; var2 < ps->mArgCnt; var2++) {
+    if (ps->sFlags & S_MACRO)
+    {
+        for (var2 = 0; var2 < ps->mArgCnt; var2++)
+        {
             if (!(var4 = getMacroArg()))
                 var4 = "";
 
@@ -69,9 +79,11 @@ void parseMacroCall(register sym_t *ps) {
 /**************************************************************************
 58 2e89 +++
  **************************************************************************/
-void freeMacro(register sym_t *ps) {
+void freeMacro(register sym_t *ps)
+{
     int16_t var2 = 0;
-    while (var2 < ps->mArgCnt) {
+    while (var2 < ps->mArgCnt)
+    {
         free(ps->mArgs[var2]->mText);
         remSym(ps->mArgs[var2]);
         var2++;

@@ -382,7 +382,7 @@ void emitAttr(register attr_t *st);
 
 #define initMemAddr()
 
-#ifdef __GNUC__
+#ifndef __GNUC__
 extern char _Hbss;
 #define inData(p) (((char *)p) < &_Hbss)
 #else

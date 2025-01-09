@@ -1,4 +1,4 @@
-#ifndef CPM
+#ifdef __GNUC__
 #include <stdlib.h>
 #include <string.h>
 

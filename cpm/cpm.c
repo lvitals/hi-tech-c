@@ -1288,8 +1288,9 @@ byte cpm_const( void)
 		return 0;
 }
 
-void my_handler(int s){
-//    printf("^C\r\n");
+void my_handler(int signum) {
+    printf("\nCaught signal %d: Ctrl+C pressed. Exiting gracefully...\n", signum);
+    exit(0); // Encerra o programa
 }
 
 void toggleInvertion(void) {

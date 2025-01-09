@@ -44,14 +44,16 @@ static void parseTstio(void);                       /* 97 4E0C +-- */
 static void parseTst(void);                         /* 98 4E31 +-- */
 static void defineLabel(register sym_t *ps);        /* 99 4EB8 +-- */
 static void multdefErr(register sym_t *ps);         /* 100 4EF3 +-- */
-static void needOneOperand(int tType);               /* 101 4F10 +-- */
+static void needOneOperand(int tType);              /* 101 4F10 +-- */
 
 /**************************************************************************
  69	sub_364fh +++
  **************************************************************************/
 
-static void chkPositiveAbs(register operand_t *po) {
-    if (po->oEsym || po->oPsym || po->oVal < 0) {
+static void chkPositiveAbs(register operand_t *po)
+{
+    if (po->oEsym || po->oPsym || po->oVal < 0)
+    {
         relocErr();
         if (po->oVal < 0)
             po->oVal = 0;
@@ -61,7 +63,8 @@ static void chkPositiveAbs(register operand_t *po) {
 /**************************************************************************
  70	relocErr	+++
  **************************************************************************/
-void relocErr() {
+void relocErr()
+{
     error("Relocation error");
 }
 
@@ -70,15 +73,18 @@ void relocErr() {
  * minor optimisation difference, but code equivalent
  * used ld de,(_yylval) ... rather than ld hl,(-yylval) ... ex de,hl
  **************************************************************************/
-static void evalOperand(register operand_t *po) {
+static void evalOperand(register operand_t *po)
+{
     uint16_t var2;
-    switch (tokType) {
+    switch (tokType)
+    {
     case T_EOL:
         po->tType = 0;
         return;
     case G_REG:
-        if (floatMode == 1 && yylval.yVal == 1) {
-            tokType     = G_CC;
+        if (floatMode == 1 && yylval.yVal == 1)
+        {
+            tokType = G_CC;
             yylval.yVal = 3;
         }
         break;
@@ -86,26 +92,32 @@ static void evalOperand(register operand_t *po) {
         break;
     case T_LPAREN:
         tokType = yylex();
-        if (tokType == G_REG) {
+        if (tokType == G_REG)
+        {
             if (yylval.yVal != R_C && yylval.yVal < R_BC)
                 operErr();
             po->tType = T_REGIND;
             po->tVal = yylval.yVal;
-            tokType   = yylex();
-            if (tokType == T_RPAREN) {
+            tokType = yylex();
+            if (tokType == T_RPAREN)
+            {
                 tokType = yylex();
-                if (po->tVal >= R_IX) {
-                    po->oVal  = 0;
+                if (po->tVal >= R_IX)
+                {
+                    po->oVal = 0;
                     po->oPsym = po->oEsym = NULL;
-                    po->tType             = T_INDEXED;
+                    po->tType = T_INDEXED;
                 }
                 return;
-            } else {
+            }
+            else
+            {
                 if (po->tVal < R_IX)
                     operErr();
                 po->tType = T_INDEXED;
             }
-        } else
+        }
+        else
             po->tType = T_MEM;
         po->expr = *evalExpr();
         if (tokType != T_RPAREN)
@@ -115,14 +127,18 @@ static void evalOperand(register operand_t *po) {
             error("Index offset too large");
         return;
     default:
-        if (tokType < T_UPLUS) {
+        if (tokType < T_UPLUS)
+        {
             if (floatMode == 1 && tokType == G_SIMPLE &&
-                (yylval.yVal == I_EI || yylval.yVal == I_DI)) {
-                tokType     = G_CC;
+                (yylval.yVal == I_EI || yylval.yVal == I_DI))
+            {
+                tokType = G_CC;
                 yylval.yVal = (yylval.yVal == I_EI) ? 5 : 4;
                 break;
-            } else {
-                tokType     = G_INT;
+            }
+            else
+            {
+                tokType = G_INT;
                 yylval.yNum = (var2 = yylval.yVal);
             }
         }
@@ -132,13 +148,14 @@ static void evalOperand(register operand_t *po) {
     }
     po->tType = tokType;
     po->tVal = yylval.yVal;
-    tokType   = yylex();
+    tokType = yylex();
 }
 
 /**************************************************************************
  72	operErr	sub_38a5h	+++
  **************************************************************************/
-static _Noreturn void operErr() {
+static _Noreturn void operErr()
+{
     error("Operand error");
     longjmp(jmpBuf, 1);
 }
@@ -147,14 +164,17 @@ static _Noreturn void operErr() {
  73	sub_38bah	+++
  **************************************************************************/
 
-static void getOperands(int minOperand) {
-    tokType    = yylex();
+static void getOperands(int minOperand)
+{
+    tokType = yylex();
     operandCnt = 0;
     if (tokType == T_COMMA)
         operErr();
-    if (tokType != T_EOL) {
+    if (tokType != T_EOL)
+    {
         evalOperand(&lOp);
-        if (tokType == T_COMMA) {
+        if (tokType == T_COMMA)
+        {
             tokType = yylex();
             evalOperand(&rOp);
             operandCnt++;
@@ -163,7 +183,8 @@ static void getOperands(int minOperand) {
     }
     if (operandCnt < minOperand)
         operErr();
-    if (tokType != T_EOL) {
+    if (tokType != T_EOL)
+    {
         error("Garbage after operands");
         tokType = T_EOL;
     }
@@ -175,7 +196,8 @@ static void getOperands(int minOperand) {
  * trivial difference in switch jmp table.  new has extra jp for EOL,
  * old version has extra jp for ENDC
  **************************************************************************/
-void doPass() {
+void doPass()
+{
     int16_t nLabel;
     register char *iy;
 
@@ -183,15 +205,18 @@ void doPass() {
     initLocalLabels();
     if (setjmp(jmpBuf)) /* line error recovery point */
         skipLine();
-    for (;;) {
-        tokType   = yylex();
-        tokVal    = yylval.yVal;
+    for (;;)
+    {
+        tokType = yylex();
+        tokVal = yylval.yVal;
         floatMode = 0;
-        symFlags  = 0;
-        switch (tokType) {
+        symFlags = 0;
+        switch (tokType)
+        {
         case T_END:
             getOperands(0);
-            if (operandCnt) {
+            if (operandCnt)
+            {
                 needOneOperand(G_INT);
                 startAddr = lOp.expr;
                 tagHex(0);
@@ -304,8 +329,8 @@ void doPass() {
         case T_IN:
             getOperands(2);
             tmpOp = lOp; /* swap left & right */
-            lOp   = rOp;
-            rOp   = tmpOp;
+            lOp = rOp;
+            rOp = tmpOp;
             parseIn_Out(0x40);
             break;
         case T_RST:
@@ -322,7 +347,8 @@ void doPass() {
             floatMode = 0;
             if (operandCnt == 0)
                 addObjByte(tokVal);
-            else {
+            else
+            {
                 if (lOp.tType != G_CC)
                     operErr();
                 addObjByte(0xc0 + (lOp.tVal << 3));
@@ -354,7 +380,8 @@ void doPass() {
                 operErr();
             if (j_opt && lOp.tType == G_REG && lOp.tVal == 7 && tokVal <= 0x18)
                 addObjByte(tokVal + 7);
-            else {
+            else
+            {
                 rOp = lOp;
                 parseBit_Rotate();
             }
@@ -375,8 +402,8 @@ void doPass() {
         case T_IN0:
             getOperands(2);
             tmpOp = lOp;
-            lOp   = rOp;
-            rOp   = tmpOp;
+            lOp = rOp;
+            rOp = tmpOp;
             parseIn0_Out0(0);
             break;
         case T_TST:
@@ -399,11 +426,13 @@ void doPass() {
 75 3d61 +++
 * optimiser does away with call csv, jp cret
 **************************************************************************/
-static void parsePush_Pop() {
+static void parsePush_Pop()
+{
     getOperands(1);
     if (lOp.tType != G_REG || lOp.tVal < R_BC || lOp.tVal == R_SP || lOp.tVal == R_AFQ)
         operErr();
-    if (lOp.tVal >= R_IX) {
+    if (lOp.tVal >= R_IX)
+    {
         addObjByte(lOp.tVal);
         lOp.tVal = R_HL;
     }
@@ -412,11 +441,13 @@ static void parsePush_Pop() {
 /**************************************************************************
  76 3dce +++
  **************************************************************************/
-static void parseAdc_Sbc() {
+static void parseAdc_Sbc()
+{
     getOperands(2);
     if (lOp.tType != G_REG)
         operErr();
-    if (lOp.tVal == R_A) {
+    if (lOp.tVal == R_A)
+    {
         lOp = rOp;
         parseArith8();
         return;
@@ -430,9 +461,11 @@ static void parseAdc_Sbc() {
 /**************************************************************************
  77 3e63 +++
  **************************************************************************/
-static void parseDefb_w() {
+static void parseDefb_w()
+{
     tokVal = tokType;
-    do {
+    do
+    {
         tokType = yylex();
         evalOperand(&lOp);
         if (lOp.tType != G_INT)
@@ -447,23 +480,28 @@ static void parseDefb_w() {
 /**************************************************************************
  78 3ea8 +++
  **************************************************************************/
-static void parseDeff() {
+static void parseDeff()
+{
     float val;
     uint8_t sign;
     floatMode = 2;
-    do {
-        sign    = 0;
+    do
+    {
+        sign = 0;
         tokType = yylex();
-        if (tokType == T_MINUS) {
+        if (tokType == T_MINUS)
+        {
             sign++;
             tokType = yylex();
         }
         if (tokType == G_INT)
             val = (float)yylval.yNum;
-        else if (tokType != G_FLOAT) {
+        else if (tokType != G_FLOAT)
+        {
             error("Floating number expected)");
             val = 0.0;
-        } else
+        }
+        else
             val = yylval.yFloat;
         if (sign)
             val = -val;
@@ -476,9 +514,11 @@ static void parseDeff() {
 /**************************************************************************
  79 3f58 +++
  **************************************************************************/
-static void markGlobals() {
+static void markGlobals()
+{
     register sym_t *pSym;
-    do {
+    do
+    {
         if ((tokType = yylex()) != G_SYM)
             operErr();
         pSym = yylval.ySym;
@@ -489,39 +529,45 @@ static void markGlobals() {
 /**************************************************************************
  80 3f83 +++
  **************************************************************************/
-_Noreturn void syntaxErr() {
+_Noreturn void syntaxErr()
+{
     error("Syntax Error");
     longjmp(jmpBuf, 1);
 }
 /**************************************************************************
 81 3f98 +++
 **************************************************************************/
-static void addObjFloat(double d) {
+static void addObjFloat(double d)
+{
 
 #if CPM
     int8_t *p;
     int16_t cnt;
     float f = d;
-    p       = (int8_t *)&f;
-    cnt     = 4;
+    p = (int8_t *)&f;
+    cnt = 4;
     while (cnt--)
         addObjByte(*p++ & 0xff);
 #else
-#define ZBIAS    64
+#define ZBIAS 64
 #define IEEEBIAS 126
 
-    union {
+    union
+    {
         uint32_t zf; /* warning relies same on byte ordering cf. float */
         float f;
     } u;
-    u.f          = (float)d; /* reduce to float */
+    u.f = (float)d; /* reduce to float */
     int16_t zexp = ((u.zf >> 23) & 0xff);
     if (zexp == 0)
         u.zf = 0;
-    else if ((zexp = zexp - IEEEBIAS + ZBIAS) > 127 || zexp < 0) {
+    else if ((zexp = zexp - IEEEBIAS + ZBIAS) > 127 || zexp < 0)
+    {
         error("Floating exponent too %s", zexp < 0 ? "small" : "large");
         u.zf = 0;
-    } else {
+    }
+    else
+    {
         u.zf &= 0x807fffff;                        /* remove original exponent */
         u.zf |= 0x800000 + ((uint32_t)zexp << 24); /* add in missing hidden bit and new exponent */
     }
@@ -537,28 +583,34 @@ static void addObjFloat(double d) {
  82 3ff8 +++
  **************************************************************************/
 
-static void parsePsect() {
+static void parsePsect()
+{
     symFlags = S_PSECT;
-    tokType  = yylex();
+    tokType = yylex();
     if (tokType != G_SYM)
         operErr();
-    if (yylval.ySym != curPsect) {
+    if (yylval.ySym != curPsect)
+    {
         curPsect = yylval.ySym;
         finishRecords();
     }
-    for (tokType = yylex(); tokType == T_COMMA; tokType = yylex()) {
+    for (tokType = yylex(); tokType == T_COMMA; tokType = yylex())
+    {
         tokType = yylex();
-        if (tokType != G_PSECT) {
+        if (tokType != G_PSECT)
+        {
             error("Flag %s unknown", yytext);
             skipLine();
             break;
         }
         curPsect->sFlags |= yylval.yVal;
     }
-    if (curPsect->sFlags & F_LOCAL) {
+    if (curPsect->sFlags & F_LOCAL)
+    {
         if (curPsect->sFlags & F_GLOBAL)
             error("Psect may not be local and global");
-    } else
+    }
+    else
         curPsect->sFlags |= F_GLOBAL;
     tagHex(0);
     symFlags = S_NONPSECT;
@@ -569,29 +621,35 @@ static void parsePsect() {
  * optimiser didn't optimise the bit reset ps->sFlags &= ~ S_UNDEF, unlike
  * the original
  **************************************************************************/
-static void parseSym() {
+static void parseSym()
+{
     register sym_t *ps;
     ps = yylval.ySym;
-    if (ps->sFlags & S_MACRO) {
+    if (ps->sFlags & S_MACRO)
+    {
         parseMacroCall(ps);
         return;
     }
     if (c_opt && crfFp)
         fprintf(crfFp, "#%s %d\n", ps->sName, curLineno);
-    if ((tokType = yylex()) == T_COLON) {
+    if ((tokType = yylex()) == T_COLON)
+    {
         defineLabel(ps);
-        if (phase != 2) {
+        if (phase != 2)
+        {
             ps->sVal = curPsect->pCurLoc;
             if ((curPsect->sFlags & S_ABSPSECT) == S_ABSPSECT)
                 ps->sPsym = NULL;
             else
                 ps->sPsym = curPsect;
             ps->sEsym = NULL;
-
-        } else if (!(ps->sFlags & S_DEFINED) && ps->sVal != curPsect->pCurLoc)
+        }
+        else if (!(ps->sFlags & S_DEFINED) && ps->sVal != curPsect->pCurLoc)
             error("Phase error");
         tagHex(0);
-    } else {
+    }
+    else
+    {
         if (tokType == T_EQU)
             defineLabel(ps);
         else if (tokType != T_DEFL)
@@ -599,10 +657,12 @@ static void parseSym() {
         savTokType = tokType;
         getOperands(1);
         needOneOperand(G_INT);
-        if (ps->sFlags & S_MACRO) {
+        if (ps->sFlags & S_MACRO)
+        {
             if (savTokType == T_DEFL)
                 multdefErr(ps);
-        } else
+        }
+        else
             ps->symRval = lOp.expr;
         ps->sFlags &= ~S_UNDEF;
         if (controls)
@@ -615,16 +675,20 @@ static void parseSym() {
  * basic bloc for tokType = yylex() moved  and bit reset not optimised
  * otherwise code same
  **************************************************************************/
-static void parseMacroDef() {
+static void parseMacroDef()
+{
     register sym_t *ps;
     tokType = yylex();
     if (tokType != G_SYM)
         syntaxErr();
     ps = yylval.ySym;
-    if (!(ps->sFlags & (S_MACRO | S_UNDEF))) {
+    if (!(ps->sFlags & (S_MACRO | S_UNDEF)))
+    {
         multdefErr(ps);
         parseCond(T_ENDM);
-    } else {
+    }
+    else
+    {
         if (ps->sFlags & S_MACRO)
             free(ps->mText);
         ps->sFlags |= S_MACRO;
@@ -637,19 +701,23 @@ static void parseMacroDef() {
 /**************************************************************************
  85 4252 +++
  **************************************************************************/
-static void parseAdd() {
+static void parseAdd()
+{
     getOperands(2);
     if (lOp.tType != G_REG || (lOp.tVal != R_A && lOp.tVal != R_HL && lOp.tVal < R_IX))
         operErr();
 
-    if (lOp.tVal >= R_BC) {
+    if (lOp.tVal >= R_BC)
+    {
         if (rOp.tType != G_REG ||
             (rOp.tVal != lOp.tVal && rOp.tVal != R_DE && rOp.tVal != R_BC && rOp.tVal != R_SP))
             operErr();
         if (lOp.tVal >= R_IX)
             addObjByte(lOp.tVal);
         addObjByte(9 + ((rOp.tVal & 6) << 3));
-    } else {
+    }
+    else
+    {
         lOp = rOp;
         parseArith8();
     }
@@ -658,46 +726,58 @@ static void parseAdd() {
 /**************************************************************************
  86 430b +++
  **************************************************************************/
-static void parseJp_Call() {
+static void parseJp_Call()
+{
     int16_t span;
     savTokType = tokType;
-    floatMode  = 1;
+    floatMode = 1;
     getOperands(1);
     if (operandCnt == 1)
         rOp = lOp;
     if (j_opt && jOptIdx != 999 && rOp.tType == G_INT && savTokType == T_JP &&
-        (operandCnt == 1 || (lOp.tType == G_CC && lOp.tVal <= 3))) {
+        (operandCnt == 1 || (lOp.tType == G_CC && lOp.tVal <= 3)))
+    {
         jOptIdx++;
-        span   = rOp.oVal - curPsect->pCurLoc;
+        span = rOp.oVal - curPsect->pCurLoc;
         tokVal = 0x18;
-        if (phase == 2 && jOptTab[jOptIdx]) {
+        if (phase == 2 && jOptTab[jOptIdx])
+        {
             jmpOptCnt++;
             parseDjnz_Jr();
             return;
-        } else if (phase != 2 && rOp.oEsym == NULL && -126 <= span && span <= 129 &&
-                   (rOp.oPsym == curPsect ||
-                    (!rOp.oPsym && (curPsect->sFlags & S_ABSPSECT) == S_ABSPSECT))) {
+        }
+        else if (phase != 2 && rOp.oEsym == NULL && -126 <= span && span <= 129 &&
+                 (rOp.oPsym == curPsect ||
+                  (!rOp.oPsym && (curPsect->sFlags & S_ABSPSECT) == S_ABSPSECT)))
+        {
             jOptTab[jOptIdx] = 1;
             parseDjnz_Jr();
             return;
-        } else
+        }
+        else
             tokVal = 0xc3;
     }
-    if (operandCnt == 2) {
+    if (operandCnt == 2)
+    {
         if (lOp.tType != G_CC)
             syntaxErr();
         tokVal = (lOp.tVal << 3) + (savTokType == T_JP ? 0xc2 : 0xc4);
-        lOp    = rOp;
+        lOp = rOp;
     }
     if ((operandCnt == 2 || savTokType == T_CALL) && lOp.tType != G_INT)
         operErr();
-    if (lOp.tType == G_INT) {
+    if (lOp.tType == G_INT)
+    {
         addObjByte(tokVal);
         addObjRelocWord(&lOp.expr);
-    } else if (lOp.tType == T_INDEXED) {
+    }
+    else if (lOp.tType == T_INDEXED)
+    {
         addObjByte(lOp.tVal);
         addObjByte(0xe9);
-    } else {
+    }
+    else
+    {
         if (lOp.tType != T_REGIND || lOp.tVal != R_HL)
             operErr();
         addObjByte(0xe9);
@@ -707,8 +787,10 @@ static void parseJp_Call() {
 /**************************************************************************
  87 44fd +++
  **************************************************************************/
-static void parseArith8() {
-    switch (lOp.tType) {
+static void parseArith8()
+{
+    switch (lOp.tType)
+    {
     case T_INDEXED:
         addObjByte(lOp.tVal);
         lOp.tVal = R_HL;
@@ -738,22 +820,29 @@ static void parseArith8() {
 /**************************************************************************
  88 4584 +++
  **************************************************************************/
-static void parseEx() {
+static void parseEx()
+{
     getOperands(2);
-    if (lOp.tType == T_REGIND) {
+    if (lOp.tType == T_REGIND)
+    {
         if (lOp.tVal != R_SP || rOp.tType != G_REG || (rOp.tVal < R_IX && rOp.tVal != R_HL))
             operErr();
         if (rOp.tVal >= R_IX)
             addObjByte(rOp.tVal);
         addObjByte(0xe3);
-    } else {
+    }
+    else
+    {
         if (lOp.tType != G_REG || rOp.tType != G_REG)
             operErr();
-        if (lOp.tVal == R_DE) {
+        if (lOp.tVal == R_DE)
+        {
             if (rOp.tVal != R_HL)
                 operErr();
             addObjByte(0xeb);
-        } else {
+        }
+        else
+        {
             if (lOp.tVal != R_AF || rOp.tVal != R_AFQ)
                 operErr();
             addObjByte(8);
@@ -764,19 +853,25 @@ static void parseEx() {
 /**************************************************************************
  89 4636 +++
  **************************************************************************/
-static void parseInc_Dec() {
+static void parseInc_Dec()
+{
     getOperands(1);
-    if (lOp.tType == G_REG && lOp.tVal >= R_BC) {
+    if (lOp.tType == G_REG && lOp.tVal >= R_BC)
+    {
         if (lOp.tVal == R_AF || lOp.tVal == R_AFQ)
             operErr();
-        if (lOp.tVal >= R_IX) {
+        if (lOp.tVal >= R_IX)
+        {
             addObjByte(lOp.tVal);
             lOp.tVal = R_HL;
         }
         tokVal = tokVal == 4 ? 3 : 0xb;
         addObjByte(tokVal + ((lOp.tVal & 6) << 3));
-    } else {
-        switch (lOp.tType) {
+    }
+    else
+    {
+        switch (lOp.tType)
+        {
         case T_INDEXED:
             addObjByte(lOp.tVal);
             lOp.tVal = R_HL;
@@ -803,13 +898,17 @@ static void parseInc_Dec() {
 /**************************************************************************
  90 4723 +++
  **************************************************************************/
-static void parseIn_Out(int16_t opBase) {
-    if (lOp.tType == T_MEM) {
+static void parseIn_Out(int16_t opBase)
+{
+    if (lOp.tType == T_MEM)
+    {
         if (rOp.tType != G_REG || rOp.tVal != R_A)
             operErr();
         addObjByte(tokVal);
         addObjRelocByte(&lOp.expr);
-    } else {
+    }
+    else
+    {
         if (lOp.tType != T_REGIND || lOp.tVal != R_C || rOp.tType != G_REG || rOp.tVal > R_A)
             operErr();
         addObjByte(0xed);
@@ -820,12 +919,14 @@ static void parseIn_Out(int16_t opBase) {
 /**************************************************************************
  91 47ab +++
 **************************************************************************/
-static void parseDjnz_Jr() {
-    if (operandCnt == 2) {
+static void parseDjnz_Jr()
+{
+    if (operandCnt == 2)
+    {
         if (lOp.tType != G_CC || lOp.tVal > 3)
             operErr();
-        tokVal     = 0x20 + (lOp.tVal << 3);
-        lOp        = rOp;
+        tokVal = 0x20 + (lOp.tVal << 3);
+        lOp = rOp;
         operandCnt = 1;
     }
     needOneOperand(G_INT);
@@ -840,8 +941,10 @@ static void parseDjnz_Jr() {
 /**************************************************************************
  92 487e +++
 **************************************************************************/
-static void parseBit_Rotate() {
-    switch (rOp.tType) {
+static void parseBit_Rotate()
+{
+    switch (rOp.tType)
+    {
     case T_INDEXED:
         addObjByte(rOp.tVal);
         rOp.tVal = R_HL;
@@ -870,7 +973,8 @@ static void parseBit_Rotate() {
  93 sub_48f9h +++
  * optimiser removed call csv && jp cret
  **************************************************************************/
-static void parseIm() {
+static void parseIm()
+{
     getOperands(1);
     needOneOperand(G_INT);
     if (lOp.oVal < 0 || lOp.oVal >= 3)
@@ -878,7 +982,8 @@ static void parseIm() {
     else
         chkPositiveAbs(&lOp);
     addObjByte(0xed);
-    switch ((int16_t)lOp.oVal) {
+    switch ((int16_t)lOp.oVal)
+    {
     case 0:
         addObjByte(0x46);
         break;
@@ -895,14 +1000,18 @@ static void parseIm() {
  * small number of basic blocks located differently and a couple of benign
  * differences on argument popping, i.e. using ex (sp),hl vs. pop and push
 **************************************************************************/
-static void parseLd() {
+static void parseLd()
+{
     getOperands(2);
-    switch (lOp.tType) {
+    switch (lOp.tType)
+    {
     case G_REG:
-        if (lOp.tVal >= R_BC) {
+        if (lOp.tVal >= R_BC)
+        {
             if (lOp.tVal == R_AF || lOp.tVal == R_AFQ)
                 operErr();
-            if (lOp.tVal == R_SP && rOp.tType == G_REG) {
+            if (lOp.tVal == R_SP && rOp.tType == G_REG)
+            {
                 if (rOp.tVal == 0xdd || rOp.tVal == 0xfd)
                     addObjByte(rOp.tVal);
                 else if (rOp.tVal != R_HL)
@@ -910,7 +1019,8 @@ static void parseLd() {
                 addObjByte(0xf9);
                 break;
             }
-            if (lOp.tVal >= R_IX) {
+            if (lOp.tVal >= R_IX)
+            {
                 addObjByte(lOp.tVal);
                 lOp.tVal = R_HL;
             }
@@ -919,45 +1029,60 @@ static void parseLd() {
             tokVal = (lOp.tVal & 6) << 3;
             if (rOp.tType == G_INT)
                 addObjByte(tokVal + 1);
-            else {
+            else
+            {
                 if (rOp.tType != T_MEM)
                     operErr();
                 if (lOp.tVal == R_HL)
                     addObjByte(0x2a);
-                else {
+                else
+                {
                     addObjByte(0xed);
                     addObjByte(tokVal | 0x4b);
                 }
             }
             addObjRelocWord(&rOp.expr);
-        } else if (rOp.tType == G_REG) {
-            if (rOp.tVal >= R_I || lOp.tVal >= R_I) {
+        }
+        else if (rOp.tType == G_REG)
+        {
+            if (rOp.tVal >= R_I || lOp.tVal >= R_I)
+            {
                 if (rOp.tVal != R_A && lOp.tVal != R_A)
                     operErr();
                 addObjByte(0xed);
-                if (lOp.tVal == R_A) {
+                if (lOp.tVal == R_A)
+                {
                     tokVal = 0x50;
-                    lOp    = rOp;
-                } else
+                    lOp = rOp;
+                }
+                else
                     tokVal = 0x40;
                 tokVal += lOp.tVal == R_I ? 7 : 0xf;
                 addObjByte(tokVal);
-            } else {
+            }
+            else
+            {
                 if (rOp.tVal > R_A)
                     operErr();
                 addObjByte(0x40 + rOp.tVal + (lOp.tVal << 3));
             }
-        } else {
+        }
+        else
+        {
             if (lOp.tVal > R_A)
                 operErr();
-            if (rOp.tType == G_INT) {
+            if (rOp.tType == G_INT)
+            {
                 addObjByte(6 + (lOp.tVal << 3));
                 addObjRelocByte(&rOp.expr);
                 break;
-            } else if (rOp.tType == T_INDEXED)
+            }
+            else if (rOp.tType == T_INDEXED)
                 addObjByte(rOp.tVal);
-            else if (rOp.tType == T_REGIND) {
-                if (rOp.tVal != R_HL) {
+            else if (rOp.tType == T_REGIND)
+            {
+                if (rOp.tVal != R_HL)
+                {
                     if (lOp.tVal != R_A)
                         operErr();
                     if (rOp.tVal != R_DE && rOp.tVal != R_BC)
@@ -965,13 +1090,16 @@ static void parseLd() {
                     addObjByte(0xa + ((rOp.tVal & 6) << 3));
                     break;
                 }
-            } else if (rOp.tType == T_MEM) {
+            }
+            else if (rOp.tType == T_MEM)
+            {
                 if (lOp.tVal != R_A)
                     operErr();
                 addObjByte(0x3a);
                 addObjRelocWord(&rOp.expr);
                 break;
-            } else
+            }
+            else
                 operErr();
             addObjByte(0x46 + (lOp.tVal << 3));
             if (rOp.tType == T_INDEXED)
@@ -979,10 +1107,13 @@ static void parseLd() {
         }
         break;
     case T_REGIND:
-        if (rOp.tType == G_INT && lOp.tVal == R_HL) {
+        if (rOp.tType == G_INT && lOp.tVal == R_HL)
+        {
             addObjByte(0x36);
             addObjRelocByte(&rOp.expr);
-        } else {
+        }
+        else
+        {
             if (rOp.tType != G_REG || rOp.tVal > R_A || (lOp.tVal != R_HL && rOp.tVal != R_A))
                 operErr();
             if (lOp.tVal == R_HL)
@@ -994,8 +1125,10 @@ static void parseLd() {
     case T_MEM:
         if (rOp.tType != G_REG)
             operErr();
-        if (rOp.tVal >= R_BC) {
-            if (rOp.tVal >= R_IX) {
+        if (rOp.tVal >= R_BC)
+        {
+            if (rOp.tVal >= R_IX)
+            {
                 addObjByte(rOp.tVal);
                 rOp.tVal = R_HL;
             }
@@ -1003,11 +1136,14 @@ static void parseLd() {
                 addObjByte(0x22);
             else if (rOp.tVal > R_SP)
                 operErr();
-            else {
+            else
+            {
                 addObjByte(0xed);
                 addObjByte(((rOp.tVal & 6) << 3) + 0x43);
             }
-        } else {
+        }
+        else
+        {
             if (rOp.tVal != R_A)
                 operErr();
             addObjByte(0x32);
@@ -1016,11 +1152,14 @@ static void parseLd() {
         break;
     case T_INDEXED:
         addObjByte(lOp.tVal);
-        if (rOp.tType == G_INT) {
+        if (rOp.tType == G_INT)
+        {
             addObjByte(0x36);
             addObjRelocByte(&lOp.expr);
             addObjRelocByte(&rOp.expr);
-        } else {
+        }
+        else
+        {
             if (rOp.tType != G_REG || rOp.tVal > R_A)
                 operErr();
             addObjByte(rOp.tVal + 0x70);
@@ -1036,7 +1175,8 @@ static void parseLd() {
 /**************************************************************************
  95 4d7f +++
 **************************************************************************/
-static void parseMlt() {
+static void parseMlt()
+{
     getOperands(1);
     if (lOp.tType != G_REG || lOp.tVal < R_BC)
         operErr();
@@ -1046,7 +1186,8 @@ static void parseMlt() {
 /**************************************************************************
  96 4dbf +++
 **************************************************************************/
-static void parseIn0_Out0(int16_t opBase) {
+static void parseIn0_Out0(int16_t opBase)
+{
     if (lOp.tType != T_MEM || rOp.tType != G_REG || rOp.tVal > R_A)
         operErr();
     addObjByte(0xed);
@@ -1057,7 +1198,8 @@ static void parseIn0_Out0(int16_t opBase) {
 /**************************************************************************
  97 4e0c +++
 **************************************************************************/
-static void parseTstio() {
+static void parseTstio()
+{
     getOperands(1);
     needOneOperand(G_INT);
     addObjByte(0xed);
@@ -1068,11 +1210,13 @@ static void parseTstio() {
 /**************************************************************************
  98 4e31 +++
 **************************************************************************/
-static void parseTst() {
+static void parseTst()
+{
     getOperands(1);
     if (operandCnt != 1)
         operErr();
-    switch (lOp.tType) {
+    switch (lOp.tType)
+    {
     case G_REG:
         if (lOp.tVal > R_A)
             operErr();
@@ -1100,25 +1244,30 @@ static void parseTst() {
  99 4eb8 +++
  bit reset not optimised
 **************************************************************************/
-static void defineLabel(register sym_t *ps) {
-    if (phase == 0) {
+static void defineLabel(register sym_t *ps)
+{
+    if (phase == 0)
+    {
         if (!(ps->sFlags & S_UNDEF))
             ps->sFlags |= S_DEFINED;
         ps->sFlags &= ~S_UNDEF;
-    } else if (phase == 2 && (ps->sFlags & S_DEFINED))
+    }
+    else if (phase == 2 && (ps->sFlags & S_DEFINED))
         multdefErr(ps);
 }
 /**************************************************************************
  100 4ef3 +++
 **************************************************************************/
-static void multdefErr(register sym_t *ps) {
+static void multdefErr(register sym_t *ps)
+{
     error("Multiply defined symbol %s", ps->sName);
 }
 
 /**************************************************************************
  101 4f10 +++
 **************************************************************************/
-static void needOneOperand(int tType) {
+static void needOneOperand(int tType)
+{
     if (operandCnt != 1 || lOp.tType != tType)
         operErr();
 }

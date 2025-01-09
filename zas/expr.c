@@ -10,36 +10,42 @@ static void binary(int16_t op, register rval_t *left, rval_t *right); /* 23 0F71
  21 0b67 +++
  * optimiser swaps load of de & hl loads for add. Code equivalent
  **************************************************************************/
-rval_t *evalExpr() {
+rval_t *evalExpr()
+{
     uint8_t var1;
-    struct {
+    struct
+    {
         int8_t op;
         uint8_t prec;
-    } * po, opStack[30];
+    } *po, opStack[30];
     register rval_t *pv;
     rval_t valStack[30];
 
-    ignoreOverflow   = n_opt;
-    pv               = &valStack[30];
-    po               = &opStack[29];
-    opStack[29].op   = 27;
+    ignoreOverflow = n_opt;
+    pv = &valStack[30];
+    po = &opStack[29];
+    opStack[29].op = 27;
     opStack[29].prec = 0;
-    var1             = 0;
-    for (;;) {
-        if (tokType == G_STR) {
+    var1 = 0;
+    for (;;)
+    {
+        if (tokType == G_STR)
+        {
             if (strlen(yylval.yStr) != 1)
                 error("Bad character const");
             yylval.yNum = yylval.yStr[0];
-            tokType     = G_INT;
+            tokType = G_INT;
         }
-        if (G_FWD <= tokType && tokType <= G_INT) {
+        if (G_FWD <= tokType && tokType <= G_INT)
+        {
             if (var1)
                 goto bad;
             var1++;
             pv--;
-            switch (tokType) {
+            switch (tokType)
+            {
             case G_INT:
-                pv->val  = yylval.yNum;
+                pv->val = yylval.yNum;
                 pv->pSym = NULL;
                 pv->eSym = NULL;
                 break;
@@ -61,7 +67,8 @@ rval_t *evalExpr() {
                 break;
             case G_SYM:
                 *pv = yylval.ySym->symRval;
-                if ((yylval.ySym->sFlags & (S_UNDEF | S_GLOBAL)) == S_UNDEF && phase == 2) {
+                if ((yylval.ySym->sFlags & (S_UNDEF | S_GLOBAL)) == S_UNDEF && phase == 2)
+                {
                     error("Undefined symbol %s", yylval.ySym->sName);
                     yylval.ySym->sFlags |= S_GLOBAL; /* treat as global */
                 }
@@ -73,21 +80,28 @@ rval_t *evalExpr() {
             }
             tokType = yylex();
             continue;
-        } else if (T_UPLUS <= tokType && tokType <= 0x2d) {
-            if (var1 == 0 && (tokType == T_PLUS || tokType == T_MINUS)) {
+        }
+        else if (T_UPLUS <= tokType && tokType <= 0x2d)
+        {
+            if (var1 == 0 && (tokType == T_PLUS || tokType == T_MINUS))
+            {
                 tokType -= (T_PLUS - T_UPLUS);
                 yylval.yVal = 8; /* precedence */
             }
-            if (tokType <= T_MARKER) {
+            if (tokType <= T_MARKER)
+            {
                 if (var1)
                     goto bad;
                 else
                     goto Ldd3; /* best option on code match - personally don't like */
-            } else if (!var1 && tokType != T_LPAREN)
+            }
+            else if (!var1 && tokType != T_LPAREN)
                 goto bad;
-            if (po->prec < yylval.yVal) {
+            if (po->prec < yylval.yVal)
+            {
             Ldd3:
-                if (tokType != T_RPAREN) {
+                if (tokType != T_RPAREN)
+                {
                     po--;
                     po->op = (int8_t)tokType;
                     if (tokType == T_LPAREN)
@@ -95,26 +109,34 @@ rval_t *evalExpr() {
                     else
                         var1 = false;
                     po->prec = (uint8_t)yylval.yVal;
-                    tokType  = yylex();
+                    tokType = yylex();
                     continue;
-                } else if (po->op != T_MARKER) {
+                }
+                else if (po->op != T_MARKER)
+                {
                     tokType = yylex();
                     continue;
                 }
             }
         }
-        if (po->op == T_LPAREN) {
+        if (po->op == T_LPAREN)
+        {
             if (tokType != T_RPAREN)
                 goto bad;
             tokType = yylex();
-            var1    = true;
-        } else if (po->op <= T_MARKER) {
+            var1 = true;
+        }
+        else if (po->op <= T_MARKER)
+        {
             unary(po->op, pv);
-        } else {
+        }
+        else
+        {
             binary(po->op, pv + 1, pv);
             pv++;
         }
-        if (++po == &opStack[30]) {
+        if (++po == &opStack[30])
+        {
             exprRetVal = *pv;
             if (pv != &valStack[29])
                 goto bad;
@@ -125,7 +147,7 @@ rval_t *evalExpr() {
     }
 bad:
     error("Expression error");
-    exprRetVal.val  = 0; /* return non relocatable 0 */
+    exprRetVal.val = 0; /* return non relocatable 0 */
     exprRetVal.pSym = NULL;
     exprRetVal.eSym = NULL;
     return &exprRetVal;
@@ -134,8 +156,10 @@ bad:
 /**************************************************************************
  22 0eb3 +++
  **************************************************************************/
-static void unary(int16_t op, register rval_t *pv) {
-    switch (op) {
+static void unary(int16_t op, register rval_t *pv)
+{
+    switch (op)
+    {
     case T_MARKER:
         return;
     case T_UMINUS:
@@ -165,13 +189,16 @@ static void unary(int16_t op, register rval_t *pv) {
 * optimiser delays test in first if in T_MINUS, allowing optimisation
 * in code load for test of pSym != and == also swaps de & hl
 **************************************************************************/
-static void binary(int16_t op, register rval_t *left, rval_t *right) {
-    switch (op) {
+static void binary(int16_t op, register rval_t *left, rval_t *right)
+{
+    switch (op)
+    {
     case T_PLUS:
         if ((left->eSym || left->pSym) && (right->eSym || right->pSym))
             relocErr();
         left->val += right->val;
-        if (left->pSym == 0 && left->eSym == 0) {
+        if (left->pSym == 0 && left->eSym == 0)
+        {
             left->pSym = right->pSym;
             left->eSym = right->eSym;
         }

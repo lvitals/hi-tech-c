@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if CPM
+#ifndef __GNUC__
 #include <sys.h>
 #endif
 

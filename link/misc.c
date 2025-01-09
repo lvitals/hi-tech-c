@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if CPM
+#ifndef __GNUC__
 #include <sys.h>
 #endif
 
 #include "link.h"
-#ifdef CPM
+#ifndef __GNUC__
 static void clrbuf(register char *p, size_t size);
 #endif
 /**************************************************************************
@@ -30,7 +30,7 @@ void *xalloc(size_t size)
  as latest definition of memcpy uses restrict and gcc complains of overlap
  also memset is usually inlined
  **************************************************************************/
-#ifdef CPM
+#ifndef __GNUC__
 static void clrbuf(register char *p, size_t size)
 {
 

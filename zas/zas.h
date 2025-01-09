@@ -30,7 +30,7 @@ typedef char bool;
  *	Linker Limitations
  */
 #define MAXINCL 30
-#ifdef CPM
+#ifndef __GNUC__
 #define MAX_SYMBOLS 601 /* Maximum symbols          */
 #else
 #define MAX_SYMBOLS 2003 /* allow bigger files */

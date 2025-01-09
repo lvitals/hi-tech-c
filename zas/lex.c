@@ -51,12 +51,14 @@ static void setTitle(char *text);                     /* 52 2970 +-- */
 /* pseudo functions to make code readable */
 #ifdef CPM
 #define PeekCh() (lineLen > 0 ? *inPtr : 0)
-#define GetCh()  (--lineLen >= 0 ? *inPtr++ : getText())
+#define GetCh() (--lineLen >= 0 ? *inPtr++ : getText())
 #else
-static inline int16_t PeekCh() {
+static inline int16_t PeekCh()
+{
     return lineLen > 0 ? *inPtr : 0;
 };
-static int16_t GetCh() {
+static int16_t GetCh()
+{
     return --lineLen < 0 ? getText() : *inPtr++;
 }
 #endif
@@ -64,7 +66,8 @@ static int16_t GetCh() {
 /**************************************************************************
 24	skipToNextToken	+++
 **************************************************************************/
-static char *skipToNextToken(register char *s) {
+static char *skipToNextToken(register char *s)
+{
     char *t;
 
     for (; *s && !Isspace(*s); ++s)
@@ -80,16 +83,21 @@ static char *skipToNextToken(register char *s) {
 /**************************************************************************
  25	zatol	+++
  **************************************************************************/
-static int32_t zatol(register char *s, uint8_t base) {
+static int32_t zatol(register char *s, uint8_t base)
+{
     int32_t val;
     int16_t digit;
 
-    for (val = 0; *s != 0; val += digit) {
+    for (val = 0; *s != 0; val += digit)
+    {
         val *= base;
-        if (Isdigit(*s)) {
+        if (Isdigit(*s))
+        {
             digit = *s - '0';
             ++s;
-        } else if (Isxdigit(*s)) {
+        }
+        else if (Isxdigit(*s))
+        {
             digit = Tolower(*s) - 'a' + 10;
             ++s;
         }
@@ -101,7 +109,8 @@ static int32_t zatol(register char *s, uint8_t base) {
         else
             digit = 99;
 #endif
-        if (digit >= base) {
+        if (digit >= base)
+        {
             error("Digit out of range");
             return 0;
         }
@@ -114,15 +123,18 @@ static int32_t zatol(register char *s, uint8_t base) {
  * optimiser used a different location for skipLine code and shared code
  * for nest++
  **************************************************************************/
-void parseCond(int16_t tok) {
+void parseCond(int16_t tok)
+{
     int16_t ch;
     int16_t nest;
 
     register char *s;
     skipLine();
     nest = 1;
-    for (;;) {
-        switch (ch = GetCh()) {
+    for (;;)
+    {
+        switch (ch = GetCh())
+        {
         case ' ':
         case '\t':
             continue;
@@ -132,12 +144,13 @@ void parseCond(int16_t tok) {
         case 'c':
         case 'e':
         case 'm':
-            s    = yytext;
+            s = yytext;
             *s++ = (char)ch;
             while (Isalnum(PeekCh()))
                 *s++ = (char)GetCh();
             *s = 0;
-            switch (getKwdId(yytext)) {
+            switch (getKwdId(yytext))
+            {
             case T_ENDC:
                 if (tok == T_ENDC && --nest == 0)
                     return;
@@ -171,13 +184,15 @@ void parseCond(int16_t tok) {
  *  optimiser used better code for ps = yylval.ySym and inverted T_ENDM
  * tests and jumps i.e. equivalent code
  **************************************************************************/
-char *parseMacroBody() {
+char *parseMacroBody()
+{
     sym_t *ps;
     int16_t var4;
     int16_t tok;
     register char *pstr;
     skipLine();
-    if (GetCh() == EOF) {
+    if (GetCh() == EOF)
+    {
         error("EOF inside macro def'n");
         return "";
     }
@@ -185,13 +200,15 @@ char *parseMacroBody() {
     lineLen++;
     macroSize = 200;
     macroUsed = 0;
-    var4      = 1;
+    var4 = 1;
     if ((pstr = malloc(macroSize)) == NULL)
         fatalErr("No space for macro def'n");
-    *pstr     = '\0';
+    *pstr = '\0';
     macroBase = pstr;
-    for (;;) {
-        switch (tok = yylex()) {
+    for (;;)
+    {
+        switch (tok = yylex())
+        {
         case T_MACRO:
             var4++;
             continue;
@@ -204,7 +221,8 @@ char *parseMacroBody() {
             break;
         case G_SYM:
             ps = yylval.ySym;
-            if ((ps->sFlags & (S_MACROPARAM | S_UNDEF | S_GLOBAL)) == S_UNDEF) {
+            if ((ps->sFlags & (S_MACROPARAM | S_UNDEF | S_GLOBAL)) == S_UNDEF)
+            {
                 remSym(ps);
                 free(ps->sName);
                 free(ps);
@@ -218,8 +236,8 @@ char *parseMacroBody() {
             continue;
         }
         macroBase[macroUsed] = '\0';
-        pstr                 = realloc(macroBase, macroUsed + 1);
-        macroBase            = 0;
+        pstr = realloc(macroBase, macroUsed + 1);
+        macroBase = 0;
         return pstr;
     }
 }
@@ -228,31 +246,37 @@ char *parseMacroBody() {
  28 15fc +++
  * minor variance in that optimiser generates slightly worse code for --n
  **************************************************************************/
-char *getMacroArg() {
+char *getMacroArg()
+{
     uint16_t n;
 
     register char *s = yytext;
     while (Isspace(PeekCh()))
         GetCh();
-    while (lineLen > 0 && PeekCh() != ',' && PeekCh() != ';' && !Isspace(PeekCh())) {
-        if (PeekCh() == '<') {
+    while (lineLen > 0 && PeekCh() != ',' && PeekCh() != ';' && !Isspace(PeekCh()))
+    {
+        if (PeekCh() == '<')
+        {
             GetCh();
             n = 1;
-            while (lineLen > 0) {
+            while (lineLen > 0)
+            {
                 if (PeekCh() == '<')
                     n++;
-                if ((*s++ = (char)GetCh()) == '>' && --n == 0) {
+                if ((*s++ = (char)GetCh()) == '>' && --n == 0)
+                {
                     s--;
                     break;
                 }
             }
             if (lineLen <= 0)
                 error("Unterminated macro arg");
-        } else
+        }
+        else
             *s++ = (char)GetCh();
     }
     *s++ = ' ';
-    *s   = '\0';
+    *s = '\0';
     if (PeekCh() == ';')
         skipLine();
     if (lineLen > 0)
@@ -262,14 +286,17 @@ char *getMacroArg() {
 /**************************************************************************
 29	sub_180ah +++
 **************************************************************************/
-static int16_t isFloat(char *s) {
+static int16_t isFloat(char *s)
+{
     bool hasE = false;
 
     if (*s == '+' || *s == '-')
         s++;
 
-    for (; *s; ++s) {
-        if (*s == 'e' || *s == 'E') {
+    for (; *s; ++s)
+    {
+        if (*s == 'e' || *s == 'E')
+        {
             hasE = true;
             if (s[1] == '+' || s[1] == '-')
                 return true;
@@ -287,11 +314,13 @@ static int16_t isFloat(char *s) {
  30	parseDirective +++
  * a couple of basic blocks moved but code equivalent
  **************************************************************************/
-static int16_t parseDirective() {
+static int16_t parseDirective()
+{
     char *fname;
     char *s;
 
-    switch (inBuf[1]) {
+    switch (inBuf[1])
+    {
     case 'T':
     case 't': /* Title */
         setTitle(skipToNextToken(inBuf + 2));
@@ -335,13 +364,15 @@ static int16_t parseDirective() {
  * minor variant as zatol now declared with base as uint8_t
  * also different way of doing --iy, neither optimal
  **************************************************************************/
-static int parseNumber() {
+static int parseNumber()
+{
     register char *s = yytext + 1;
-    uint8_t base     = 0;
+    uint8_t base = 0;
 
     while (Isxdigit(PeekCh()) || (floatMode == 2 && PeekCh() == '.'))
         *s++ = (char)GetCh();
-    switch (PeekCh()) {
+    switch (PeekCh())
+    {
     case 'H':
     case 'h':
         base = 16;
@@ -356,8 +387,10 @@ static int parseNumber() {
         break;
     case '+':
     case '-':
-        if (s[-1] == 'e' || s[-1] == 'E') {
-            do {
+        if (s[-1] == 'e' || s[-1] == 'E')
+        {
+            do
+            {
                 *s++ = (char)GetCh();
             } while (Isdigit(PeekCh()));
             break;
@@ -365,20 +398,24 @@ static int parseNumber() {
         /* fall through */
 
     default:
-        if (s[-1] == 'f' || s[-1] == 'b') {
+        if (s[-1] == 'f' || s[-1] == 'b')
+        {
             s--;
-            tmpId       = *s == 'f' ? G_FWD : G_BWD;
-            *s          = 0;
+            tmpId = *s == 'f' ? G_FWD : G_BWD;
+            *s = 0;
             yylval.yNum = atol(yytext);
             return tmpId;
-        } else if (s[-1] == 'B') {
+        }
+        else if (s[-1] == 'B')
+        {
             s--;
             base = 2;
         }
         break;
     }
     *s = 0;
-    if (base == 0 && floatMode == 2 && isFloat(yytext)) {
+    if (base == 0 && floatMode == 2 && isFloat(yytext))
+    {
         yylval.yFloat = (float)atof(yytext);
         return G_FLOAT;
     }
@@ -391,14 +428,17 @@ static int parseNumber() {
 /**************************************************************************
 32	1b8c +++
 **************************************************************************/
-int16_t yylex() {
+int16_t yylex()
+{
     int ch;
     char *tokStart;
     register char *s;
-    for (;;) {
-        s        = yytext;
+    for (;;)
+    {
+        s = yytext;
         tokStart = inPtr;
-        switch (ch = GetCh()) {
+        switch (ch = GetCh())
+        {
         case -1:
             return -1;
         case '\t':
@@ -414,7 +454,7 @@ int16_t yylex() {
                 GetCh();
             else
                 error("Unterminated string");
-            *s          = 0;
+            *s = 0;
             yylval.yStr = yytext;
             return G_STR;
         case '.':
@@ -454,12 +494,14 @@ int16_t yylex() {
         default:
         getId:
             *s++ = ch;
-            if (Isalpha(ch)) {
+            if (Isalpha(ch))
+            {
                 while (Isalnum(PeekCh()))
                     *s++ = (char)GetCh();
                 if (s == yytext + 2 && PeekCh() == '\'')
                     *s++ = (char)GetCh();
-            } else if (Isdigit(ch))
+            }
+            else if (Isdigit(ch))
                 return parseNumber();
             break;
         }
@@ -467,24 +509,30 @@ int16_t yylex() {
         while (Isspace(PeekCh()))
             GetCh();
         *s = 0;
-        if (symFlags) {
+        if (symFlags)
+        {
             tmpId = getPsectId(yytext);
             if (tmpId != -1)
                 return tmpId;
         }
-        if (yytext[0] != '_') {
+        if (yytext[0] != '_')
+        {
             tmpId = getKwdId(yytext);
             if (tmpId != -1)
                 return tmpId;
         }
-        if (Isalpha(yytext[0])) {
+        if (Isalpha(yytext[0]))
+        {
             yylval.ySym = getSym(yytext, symFlags);
-            if (yylval.ySym->sFlags & S_MACROPARAM) {
+            if (yylval.ySym->sFlags & S_MACROPARAM)
+            {
                 inPtr = tokStart;
                 openMacro(yylval.ySym);
-            } else
+            }
+            else
                 return G_SYM;
-        } else
+        }
+        else
             error("Lexical error");
     }
 }
@@ -492,18 +540,23 @@ int16_t yylex() {
 /**************************************************************************
  33	1f54	+++
  **************************************************************************/
-static int16_t popSrc() {
+static int16_t popSrc()
+{
     register char *name;
 
-    if (srcSP > 0) {
-        if (srcStack[srcSP].srcType == 0) { /* from file */
+    if (srcSP > 0)
+    {
+        if (srcStack[srcSP].srcType == 0)
+        { /* from file */
             fclose(srcStack[srcSP].srcFp);
             free(srcStack[srcSP].srcName);
-        } else if (srcStack[srcSP].srcType == 1)
+        }
+        else if (srcStack[srcSP].srcType == 1)
             freeMacro(srcStack[srcSP].srcSym);
-        if (--srcSP > 0) {
-            curLineno   = srcStack[srcSP].srcLineno;
-            controls    = (char)srcStack[srcSP].srcControls;
+        if (--srcSP > 0)
+        {
+            curLineno = srcStack[srcSP].srcLineno;
+            controls = (char)srcStack[srcSP].srcControls;
             curFileName = srcStack[srcSP].srcName;
             if (c_opt && crfFp)
                 fprintf(crfFp, "~%s\n", curFileName);
@@ -520,19 +573,20 @@ static int16_t popSrc() {
 /**************************************************************************
  34	openFile +++
  **************************************************************************/
-static void openFile(char *name) {
+static void openFile(char *name)
+{
     char *s;
     register FILE *fp;
 
     if ((fp = fopen(name, "r")) == 0)
         fatalErr("Can't open %sfile %s", (srcSP != 0) ? "include " : "", name);
-    srcStack[srcSP].srcLineno   = curLineno;
+    srcStack[srcSP].srcLineno = curLineno;
     srcStack[srcSP].srcControls = controls;
     if (++srcSP == MAXINCL)
         fatalErr("Include files nested too deep");
     srcStack[srcSP].srcType = 0;
-    srcStack[srcSP].srcFp   = fp;
-    s                       = xalloc(strlen(name) + 1);
+    srcStack[srcSP].srcFp = fp;
+    s = xalloc(strlen(name) + 1);
     strcpy(s, name);
     srcStack[srcSP].srcName = curFileName = s;
     if (crfFp && c_opt)
@@ -543,26 +597,29 @@ static void openFile(char *name) {
 /**************************************************************************
  35	openMacro +++
  **************************************************************************/
-void openMacro(register sym_t *ps) {
+void openMacro(register sym_t *ps)
+{
     if (srcSP > 0 && srcStack[srcSP].srcType && lineLen > 0)
         srcStack[srcSP].srcText -= lineLen;
-    srcStack[srcSP].srcLineno   = curLineno;
+    srcStack[srcSP].srcLineno = curLineno;
     srcStack[srcSP].srcControls = controls;
     if (++srcSP == MAXINCL)
         fatalErr("Macro expansions nested too deep");
     srcStack[srcSP].srcType = (ps->sFlags & S_MACRO) ? 1 : 2;
     srcStack[srcSP].srcName = curFileName;
     srcStack[srcSP].srcText = ps->mText;
-    srcStack[srcSP].srcSym  = ps;
-    lineLen                 = 0;
+    srcStack[srcSP].srcSym = ps;
+    lineLen = 0;
 }
 
 /**************************************************************************
  36	getText	+++
  **************************************************************************/
-int16_t getText() {
+int16_t getText()
+{
     flushLine();
-    for (;;) {
+    for (;;)
+    {
         if (readSrc())
             break;
         if (!popSrc())
@@ -584,13 +641,15 @@ int16_t getText() {
  37	readSrc	+++
  **************************************************************************/
 
-static bool readSrc() {
+static bool readSrc()
+{
     register char *s;
 
     if (srcSP == 0)
         return 0;
 
-    if (srcStack[srcSP].srcType != 0) { /* reading text expansion */
+    if (srcStack[srcSP].srcType != 0)
+    { /* reading text expansion */
         s = inBuf;
 
         for (s = inBuf; s < inBuf + sizeof(inBuf) && *srcStack[srcSP].srcText;)
@@ -598,7 +657,8 @@ static bool readSrc() {
                 break;
         *s = 0;
         return s != inBuf;
-    } else
+    }
+    else
         return fgets(inBuf, 256, srcStack[srcSP].srcFp) != 0;
 }
 
@@ -608,7 +668,8 @@ static bool readSrc() {
 #if !defined(CPM) && !defined(_MSC_VER)
 #define CPMEOF 0x1a
 
-char *afgets(char *s, int n, FILE *stream) {
+char *afgets(char *s, int n, FILE *stream)
+{
 
     int ch = EOF;
     char *ptr;
@@ -629,7 +690,8 @@ char *afgets(char *s, int n, FILE *stream) {
 /**************************************************************************
  38	listDirective +++
  **************************************************************************/
-static bool listDirective(char *s) {
+static bool listDirective(char *s)
+{
     s = skipToNextToken(s);
     if ((*s++ + 0x20) != 'o')
         error("Bad arg to *L");
@@ -639,7 +701,8 @@ static bool listDirective(char *s) {
 /**************************************************************************
  39	skipLine	+++
  **************************************************************************/
-void skipLine() {
+void skipLine()
+{
     if (lineLen >= 0)
         inPtr += lineLen;
     lineLen = 0;
@@ -648,12 +711,13 @@ void skipLine() {
 /**************************************************************************
  40	initLine +++
  **************************************************************************/
-static void initLine() {
+static void initLine()
+{
     if (lstThisLine)
         return;
     if ((showHex = lstThisLine = controls) == 0)
         return;
-    outPtr    = outLine;
+    outPtr = outLine;
     pHexStart = hexLines;
     initHexLine();
     hexLineCnt = 1;
@@ -662,10 +726,11 @@ static void initLine() {
 /**************************************************************************
  41	initHexLine: +++
  **************************************************************************/
-static void initHexLine() {
+static void initHexLine()
+{
     register char *p;
 
-    p    = pHexStart + LIST_FRAGMENT_SIZE;
+    p = pHexStart + LIST_FRAGMENT_SIZE;
     *--p = 0;
 
     while (p > pHexStart)
@@ -675,7 +740,7 @@ static void initHexLine() {
         sprintf(pHexStart, "%4d", curLineno);
 
     pHexStart[4] = (srcSP > 1) ? '+' : ' ';
-    pHexCode     = &pHexStart[14];
+    pHexCode = &pHexStart[14];
 }
 
 /**************************************************************************
@@ -685,10 +750,12 @@ static void initHexLine() {
  * whole value
  * also one basic block located differently
  **************************************************************************/
-void tagHex(uint16_t flag) {
+void tagHex(uint16_t flag)
+{
     if (!showHex)
         return;
-    if (pHexStart[8] == ' ') {
+    if (pHexStart[8] == ' ')
+    {
         hex4(pHexStart + 8, curPsect->pCurLoc);
         if ((curPsect->sFlags & S_ABSPSECT) != S_ABSPSECT)
             pHexStart[12] = '\'';
@@ -699,10 +766,12 @@ void tagHex(uint16_t flag) {
         *pHexCode++ = '*';
     else if (flag == TF_REL)
         *pHexCode++ = '\'';
-    if (pHexStart + 26 <= ++pHexCode) {
+    if (pHexStart + 26 <= ++pHexCode)
+    {
         if (hexLineCnt == 10)
             showHex = false;
-        else {
+        else
+        {
             pHexStart = &hexLines[hexLineCnt++ * 33];
             initHexLine();
         }
@@ -712,8 +781,10 @@ void tagHex(uint16_t flag) {
 /**************************************************************************
  43 putByte 258c +++
  **************************************************************************/
-void putByte(uint16_t n, uint16_t flag) {
-    if (showHex) {
+void putByte(uint16_t n, uint16_t flag)
+{
+    if (showHex)
+    {
         hex2(pHexCode, n);
         pHexCode += 2;
         tagHex(flag);
@@ -722,8 +793,10 @@ void putByte(uint16_t n, uint16_t flag) {
 /**************************************************************************
  44 putAddr 25bb +++
  **************************************************************************/
-void putAddr(uint16_t n, uint16_t flag) {
-    if (showHex) {
+void putAddr(uint16_t n, uint16_t flag)
+{
+    if (showHex)
+    {
         hex4(pHexCode, n);
         pHexCode += 4;
         tagHex(flag);
@@ -733,15 +806,18 @@ void putAddr(uint16_t n, uint16_t flag) {
 /**************************************************************************
  45 flushLine 25ec +++
  **************************************************************************/
-static void flushLine() {
+static void flushLine()
+{
     char *s;
     int16_t i;
     int16_t j;
     register char *p;
 
     j = i = (int16_t)(inPtr - (s = inBuf));
-    if (macroBase) {
-        if (macroUsed + i + 2 >= macroSize) {
+    if (macroBase)
+    {
+        if (macroUsed + i + 2 >= macroSize)
+        {
             macroSize = macroUsed + i + 200;
             macroBase = realloc(macroBase, macroSize);
             if (!macroBase)
@@ -760,7 +836,8 @@ static void flushLine() {
     s = inBuf;
     while (i--)
         *p++ = *s++;
-    if (p[-1]) {
+    if (p[-1])
+    {
         outPtr = p;
         return;
     }
@@ -770,16 +847,19 @@ static void flushLine() {
     p = outLine;
     if (hexLineCnt > 1 && &pHexStart[14] == pHexCode)
         hexLineCnt--;
-    for (; i < hexLineCnt || *p; i++) {
+    for (; i < hexLineCnt || *p; i++)
+    {
         if (rowCnt == 0)
             prHeading();
         if (i < hexLineCnt)
             printf("%s", &hexLines[i * 33]);
-        if (*p) {
+        if (*p)
+        {
             if (i >= hexLineCnt)
                 printf("\t\t\t\t");
             j = 32;
-            while (*p && j < width) {
+            while (*p && j < width)
+            {
                 if (*p == '\t')
                     j = (j + 8) & ~7;
                 else
@@ -798,15 +878,17 @@ static void flushLine() {
 /**************************************************************************
 46 hex2	2829h +++
  **************************************************************************/
-static void hex2(register char *p, int16_t val) {
+static void hex2(register char *p, int16_t val)
+{
     *p++ = "0123456789ABCDEF"[(val >> 4) & 0xf];
-    *p   = "0123456789ABCDEF"[val & 0xf];
+    *p = "0123456789ABCDEF"[val & 0xf];
 }
 
 /**************************************************************************
  47 hex4	286dh +++
  **************************************************************************/
-static void hex4(register char *p, int16_t val) {
+static void hex4(register char *p, int16_t val)
+{
     hex2(p, val >> 8);
     hex2(p + 2, val);
 }
@@ -814,25 +896,30 @@ static void hex4(register char *p, int16_t val) {
 /**************************************************************************
  48	setHeading	sub-289Fh	+++
  ***************************************************************/
-void setHeading(char *text) {
+void setHeading(char *text)
+{
     strncpy(heading, text, sizeof(heading) - 1);
     heading[sizeof(heading) - 1] = 0;
 }
 /**************************************************************************
 49 28bc +++
 ***************************************************************/
-static void resetMacroList() {
-    if (!i_opt) {
-        lineLen     = 0;
-        inPtr       = inBuf;
+static void resetMacroList()
+{
+    if (!i_opt)
+    {
+        lineLen = 0;
+        inPtr = inBuf;
         lstThisLine = false;
     }
 }
 /**************************************************************************
 50	topOfPage	sub-28D2h	+++
 ***************************************************************/
-void topOfPage() {
-    if (controls && rowCnt) {
+void topOfPage()
+{
+    if (controls && rowCnt)
+    {
         fputc('\f', stdout);
         rowCnt = 0;
     }
@@ -841,7 +928,8 @@ void topOfPage() {
 /**************************************************************************
 51	prHeading	sub-28F1h	+++
 ***************************************************************/
-static void prHeading() {
+static void prHeading()
+{
     int16_t spc;
 
     printf("\n\n");
@@ -857,7 +945,8 @@ static void prHeading() {
 /**************************************************************************
  52	setTitle	sub-2970h	+++
  ***************************************************************/
-static void setTitle(char *text) {
+static void setTitle(char *text)
+{
     strncpy(title, text, sizeof(title) - 1);
     title[sizeof(title) - 1] = 0;
 }
@@ -865,11 +954,13 @@ static void setTitle(char *text) {
 /**************************************************************************
  53 298d +++
  **************************************************************************/
-void putTaggedAddr(rval_t *pv, int16_t ch) {
+void putTaggedAddr(rval_t *pv, int16_t ch)
+{
     int16_t var2;
-    if (showHex) {
+    if (showHex)
+    {
         pHexStart[20] = (char)ch;
-        pHexCode      = pHexStart + 8;
+        pHexCode = pHexStart + 8;
         if (pv->eSym)
             var2 = TF_EXT;
         else if (pv->pSym)
@@ -882,8 +973,10 @@ void putTaggedAddr(rval_t *pv, int16_t ch) {
 /**************************************************************************
  54 29fe +++
  **************************************************************************/
-void putErrCode(int16_t ch) {
-    if (showHex) {
+void putErrCode(int16_t ch)
+{
+    if (showHex)
+    {
         if (pHexStart[5] == ' ')
             pHexStart[5] = (char)ch;
         else
@@ -894,7 +987,8 @@ void putErrCode(int16_t ch) {
 /**************************************************************************
  55	prSymbols 2a23 +++
  **************************************************************************/
-void prSymbols() {
+void prSymbols()
+{
     char fmt[20];
     int col;
     sym_t **ppSym;
@@ -915,11 +1009,13 @@ void prSymbols() {
     if (maxSymLen < 6)
         maxSymLen = 6;
     sprintf(fmt, "%%%ds %%s%%c  ", maxSymLen);
-    ppSym     = symTable;
+    ppSym = symTable;
     maxSymLen = width / (maxSymLen + 8); /* reuse maxSymLen for symbols per line */
-    col       = 0;
-    while (*ppSym) {
-        if (!((*ppSym)->sFlags & S_MACRO)) {
+    col = 0;
+    while (*ppSym)
+    {
+        if (!((*ppSym)->sFlags & S_MACRO))
+        {
             if ((*ppSym)->sFlags & S_PSECT)
                 xrefType = '#';
             else if ((*ppSym)->sFlags & S_UNDEF)
@@ -929,7 +1025,8 @@ void prSymbols() {
             else
                 xrefType = ' ';
 
-            if (col >= maxSymLen) {
+            if (col >= maxSymLen)
+            {
                 fputc('\n', stdout);
                 col = 0;
                 if (++rowCnt == 61)

@@ -13,7 +13,7 @@ echo "Step 1: Preprocess the source file"
 
 # Step 2: Run CP/M compiler
 echo "Step 2: Run CP/M compiler"
-../cpm/cpm P1.COM HELLO1.TMP HELLO2.TMP || {
+../p1/p1 HELLO1.TMP HELLO2.TMP || {
     echo "CP/M compilation failed!"
     exit 1
 }

@@ -1,10 +1,40 @@
+/*
+ *
+ * The p1.h file is part of the restored P1.COM program
+ * from the Hi-Tech CP/M Z80 C v3.09
+ *
+ * Not a commercial goal of this laborious work is to popularize among
+ * potential fans of 8-bit computers the old HI-TECH Z80 C compiler V3.09
+ * (HI-TECH Software) and extend its life, outside of the CP/M environment
+ * for full operation in windows 32/64 and Unix-like operating systems
+ *
+ * The HI-TECH Z80 C cross compiler V3.09 is provided free of charge for any use,
+ * private or commercial, strictly as-is. No warranty or product support
+ * is offered or implied including merchantability, fitness for a particular
+ * purpose, or non-infringement. In no event will HI-TECH Software or its
+ * corporate affiliates be liable for any direct or indirect damages.
+ *
+ * You may use this software for whatever you like, providing you acknowledge
+ * that the copyright to this software remains with HI-TECH Software and its
+ * corporate affiliates.
+ *
+ * All copyrights to the algorithms used, binary code, trademarks, etc.
+ * belong to the legal owner - Microchip Technology Inc. and its subsidiaries.
+ * Commercial use and distribution of recreated source codes without permission
+ * from the copyright holderis strictly prohibited.
+ *
+ *
+ * See the readme.md file for additional commentary
+ *
+ * Mark Ogden
+ * 09-Jul-2022
+ */
 #ifndef _P1_H
 #define _P1_H
 
 #include "cclass.h"
-#include "tok.h"
-
 #include <stdio.h>
+#include "tok.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,9 +76,9 @@ typedef long int32_t;
 #undef putchar
 int putchar(int ch);
 #else
-#define FORCEINIT = 0
+#define FORCEINIT    = 0
 /* map some old HiTech functions */
-#define rindex strrchr
+#define rindex       strrchr
 #define blkclr(p, s) memset(p, 0, s);
 #endif
 
@@ -58,24 +88,20 @@ int putchar(int ch);
  *	Structural declarations
  */
 
-typedef union
-{
+typedef union {
     char *yStr;
     int32_t yNum;
     uint8_t yVal;
     struct _sym *ySym;
 } YYTYPE;
 
-typedef struct _s8
-{
-    union
-    {
+typedef struct _s8 {
+    union {
         struct _sym *_nextSym;
         struct _s8 *_nextAttr; /* short hand for &_nextSym->attr */
         int16_t _labelId;
     } u1;
-    union
-    {
+    union {
         struct _expr *_pExpr;
         struct _args *_pFargs;
     } u2;
@@ -84,17 +110,16 @@ typedef struct _s8
     char nodeType;
 } attr_t;
 
-#define nextSym u1._nextSym
+#define nextSym  u1._nextSym
 #define nextAttr u1._nextAttr /* short hand for &nextSym->attr */
-#define labelId u1._labelId
+#define labelId  u1._labelId
 
-#define pExpr u2._pExpr
-#define pFargs u2._pFargs
+#define pExpr     u2._pExpr
+#define pFargs     u2._pFargs
 
 ;
 
-typedef struct _sym
-{
+typedef struct _sym {
     attr_t attr;
     struct _sym *symList;
     struct _sym *memberList;
@@ -108,27 +133,28 @@ typedef struct _sym
     char *nVName;
 } sym_t;
 
+
+
 /* flags flags */
-#define S_MEM 1
-#define S_REG 4
-#define S_VAR 0x10
-#define S_ARGDECL 0x20
-#define S_IMPLICIT 0x40
-#define S_NAMEID 0x80
-#define S_EMITTED 0x100
-#define S_ARG 0x200
-#define S_BITFIELD 0x400
+#define S_MEM         1
+#define S_REG         4
+#define S_VAR         0x10
+#define S_ARGDECL     0x20
+#define S_IMPLICIT    0x40
+#define S_NAMEID      0x80
+#define S_EMITTED     0x100
+#define S_ARG         0x200
+#define S_BITFIELD    0x400
 
-#define a_labelId attr.labelId
+#define a_labelId     attr.labelId
 #define a_indirection attr.indirection
-#define a_dataType attr.dataType
-#define a_nodeType attr.nodeType
-#define a_nextSym attr.nextSym
-#define a_expr attr.pExpr
-#define a_args attr.pFargs
+#define a_dataType    attr.dataType
+#define a_nodeType    attr.nodeType
+#define a_nextSym     attr.nextSym
+#define a_expr        attr.pExpr
+#define a_args        attr.pFargs
 
-typedef struct
-{
+typedef struct {
     char name[3];
     char prec;
     uint8_t operandFlags;
@@ -136,36 +162,34 @@ typedef struct
     uint8_t nodeType;
 } op_t;
 /* operand flags */
-#define O_LEAF 1   /* leaf expression */
-#define O_BINARY 2 /* binary expression */
-#define O_ALT 4    /* unary/binary expression */
-#define O_RTOL 8
-#define O_16 16
+#define O_LEAF      1 /* leaf expression */
+#define O_BINARY    2 /* binary expression */
+#define O_ALT      4 /* unary/binary expression */
+#define O_RTOL         8
+#define O_16        16
 
 /* operator flags */
-#define OP_RBOOL 1 /* requires right bool */
-#define OP_LBOOL 2 /* requires left bool */
-#define OP_SCALE 4 /* operation scales for pointers */
-#define OP_FLOAT 0x10
-#define OP_INT 0x20
+#define OP_RBOOL    1 /* requires right bool */
+#define OP_LBOOL    2 /* requires left bool */
+#define OP_SCALE    4 /* operation scales for pointers */
+#define OP_FLOAT    0x10
+#define OP_INT      0x20
 #define OP_UNSIGNED 0x40
-#define OP_VOIDFUNC 0x80 /* promote void in function args */
-#define OP_SIZEOF 0x100  /* sizeof op */
-#define OP_SEP 0x200     /* separates expressions */
-#define OP_MEMBER 0x800  /* access member */
-#define OP_AREL 0x1000   /* arithmetic rel */
-#define OP_RTOL 0x2000   /* right to left associative */
-#define OP_DREF 0x4000   /* deref */
-#define OP_EREL 0x8000   /* equality rel*/
+#define OP_VOIDFUNC 0x80   /* promote void in function args */
+#define OP_SIZEOF   0x100  /* sizeof op */
+#define OP_SEP      0x200  /* separates expressions */
+#define OP_MEMBER   0x800  /* access member */
+#define OP_AREL     0x1000 /* arithmetic rel */
+#define OP_RTOL     0x2000 /* right to left associative */
+#define OP_DREF     0x4000 /* deref */
+#define OP_EREL     0x8000 /* equality rel*/
 
-typedef struct _args
-{
+typedef struct _args {
     int16_t cnt;
     attr_t argVec[1];
 } args_t;
 
-typedef struct _s12
-{
+typedef struct _s12 {
     sym_t *pSym1;
     attr_t *pAttr;
     sym_t *pSym2;
@@ -176,54 +200,47 @@ typedef struct _s12
     bool ucb;
 } decl_t;
 
-typedef struct _expr
-{
+typedef struct _expr {
     uint8_t tType;
-    union
-    {
+    union {
         unsigned long _t_ul;
         long _t_l;
         char *_t_s;
         struct _sym *_t_pSym;
-        struct
-        {
+        struct {
             struct _expr *_lhs;
             struct _expr *_rhs;
         } s1;
-        struct
-        {
+        struct {
             int16_t _id;
             int16_t _chCnt;
         } s2;
     } u1;
-#define t_ul u1._t_ul
-#define t_l u1._t_l
-#define t_s u1._t_s
-#define t_lhs u1.s1._lhs
-#define t_rhs u1.s1._rhs
-#define t_id u1.s2._id
+#define t_ul    u1._t_ul
+#define t_l     u1._t_l
+#define t_s     u1._t_s
+#define t_lhs   u1.s1._lhs
+#define t_rhs   u1.s1._rhs
+#define t_id    u1.s2._id
 #define t_chCnt u1.s2._chCnt
-#define t_pSym u1._t_pSym
+#define t_pSym  u1._t_pSym
 
     attr_t attr;
 } expr_t;
 
-typedef struct
-{
+typedef struct {
     expr_t *caseVal;
     int16_t caseLabel;
 } s4_t;
 
-typedef struct
-{
+typedef struct {
     expr_t *switchExpr;
     int16_t caseCnt;
     int16_t defLabel;
     s4_t caseOptions[255];
 } case_t;
 
-typedef struct
-{
+typedef struct {
     uint8_t op;
     uint8_t prec;
 } opStk_t;
@@ -238,7 +255,7 @@ extern op_t opTable[68];        /* 9271 */
 extern uint8_t byte_968b;       /* 968b */
 extern int16_t word_968c;       /* 968c */
 extern int16_t tmpLabelId;      /* 968e */
-extern int16_t lastLineNo;      /* 9caf */
+extern int16_t lastLineNo;       /* 9caf */
 extern char emittedSrcFile[64]; /* 9cb1 */
 extern expr_t **exprSP;         /* 9cf1 */
 extern opStk_t opStk[20];       /* 9cf3 */
@@ -272,12 +289,12 @@ extern FILE *tmpFp;             /* a084 */
 extern char inBuf[512];         /* a086 */
 extern int16_t errCnt;          /* a286 */
 extern int8_t depth;            /* a288 */
-extern uint8_t voidReturn;      /* a289 */
+extern uint8_t voidReturn;       /* a289 */
 extern bool unreachable;        /* a28a */
-extern int16_t returnLabel;     /* a28b */
+extern int16_t returnLabel;       /* a28b */
 extern sym_t *curFuncNode;      /* a28d */
 extern sym_t *p25_a28f;         /* ad8f */
-extern sym_t *tmpSyms;          /* as91 */
+extern sym_t *tmpSyms;        /* as91 */
 extern sym_t *symFreeList;      /* a293 */
 extern sym_t **hashtab;         /* a295 */
 extern decl_t *curDecl;         /* a297 */
@@ -380,14 +397,25 @@ sym_t *sub_6360(void);
 sym_t *sub_69ca(uint8_t p1, register attr_t *p2, uint8_t p3, sym_t *p4);
 void emitAttr(register attr_t *st);
 
-#define initMemAddr()
 
-#ifndef __GNUC__
+#ifdef _WIN32
+void initMemAddr(void); /* for now only needed for windows */
+#else
+#define initMemAddr()
+#endif
+
+#ifdef CPM
 extern char _Hbss;
 #define inData(p) (((char *)p) < &_Hbss)
+#else
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#define initMemAddr()
+#define inData(p) (!malloc_zone_from_ptr(p))
 #else
 extern const char *_Ldata;
 extern const char *_Hbss;
 #define inData(p) (_Ldata <= ((const char *)p) && ((const char *)p) < _Hbss)
+#endif
 #endif
 #endif

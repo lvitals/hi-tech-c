@@ -1,4 +1,5 @@
 # Ignore object files in specific directories
+.vscode
 cgen/*.o
 cgen/*.obj
 cpm/*.o

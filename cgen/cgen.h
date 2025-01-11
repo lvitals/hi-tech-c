@@ -54,11 +54,9 @@
  * exceptions if the variable is used, rather than rely on
  * random data
  */
-#ifdef _MSC_VER
+
 #define FORCEINIT = NULL
-#else
-#define FORCEINIT
-#endif
+
 #else
 typedef unsigned short uint16_t;
 typedef short int16_t;
@@ -81,105 +79,111 @@ typedef unsigned long uint32_t;
 /*
  *	Constant declarations
  */
-#define MININT  -32768 /* min for int (0x8000)	*/
-#define MAXINT  32767  /* max for int (0x7fff)	*/
-#define MAXFUN  0x20   /* Maximum limit nested function */
-#define MAXBUF  60     /* Maximum buffer size 		*/
-#define MAXNAME 40     /* Maximum file name length	*/
-#define MAXERR  30     /* Maximum number nonfatal errors*/
+#define MININT -32768 /* min for int (0x8000)	*/
+#define MAXINT 32767  /* max for int (0x7fff)	*/
+#define MAXFUN 0x20   /* Maximum limit nested function */
+#define MAXBUF 60     /* Maximum buffer size 		*/
+#define MAXNAME 40    /* Maximum file name length	*/
+#define MAXERR 30     /* Maximum number nonfatal errors*/
 
-#define NULSTR   0    /*  0  ""	*/
-#define NOT      1    /*  1  "!"	*/
-#define NEQL     2    /*  2  "!="	*/
+#define NULSTR 0      /*  0  ""	*/
+#define NOT 1         /*  1  "!"	*/
+#define NEQL 2        /*  2  "!="	*/
 #define HASHSIGN 3    /*  3  "#"	*/
-#define DOLLAR   4    /*  4  "$"	*/
+#define DOLLAR 4      /*  4  "$"	*/
 #define DOLLAR_U 5    /*  5  "$U"	*/
-#define MOD      6    /*  6  "%"	*/
-#define BAND     7    /*  7  "&"	*/
-#define LAND     8    /*  8  "&&"	*/
-#define GADDR    9    /*  9  "&U"	*/
-#define LPAREN   0xA  /* 10  "("	*/
-#define RPAREN   0xB  /* 11  ")"	*/
-#define MUL      0xC  /* 12  "*"	*/
-#define MUL_U    0xD  /* 13  "*U"	*/
-#define ADD      0xE  /* 14  "+"	*/
-#define INCR     0xF  /* 15  "++"	*/
-#define PLUS_U   0x10 /* 16  "+U"	*/
-#define COMMA    0x11 /* 17  ","	*/
-#define SUB      0x12 /* 18  "-"	*/
-#define DECR     0x13 /* 19  "--"	*/
-#define CONV     0x14 /* 20  "->"	*/
-#define MINUS_U  0x15 /* 21  "-U"	*/
-#define DOT      0x16 /* 22  "."	*/
-#define MEMBER   0x16 /* Alias for use in class*/
-#define DOT_DOT  0x17 /* 23  ".."	*/
-#define DIV      0x18 /* 24  "/"	*/
-#define COLON    0x19 /* 25  ":"	*/
-#define COLON_U  0x1A /* 26  ":U"	*/
-#define COLON_S  0x1B /* 27  ":s"	*/
-#define SCOLON   0x1C /* 28  ";"	*/
+#define MOD 6         /*  6  "%"	*/
+#define BAND 7        /*  7  "&"	*/
+#define LAND 8        /*  8  "&&"	*/
+#define GADDR 9       /*  9  "&U"	*/
+#define LPAREN 0xA    /* 10  "("	*/
+#define RPAREN 0xB    /* 11  ")"	*/
+#define MUL 0xC       /* 12  "*"	*/
+#define MUL_U 0xD     /* 13  "*U"	*/
+#define ADD 0xE       /* 14  "+"	*/
+#define INCR 0xF      /* 15  "++"	*/
+#define PLUS_U 0x10   /* 16  "+U"	*/
+#define COMMA 0x11    /* 17  ","	*/
+#define SUB 0x12      /* 18  "-"	*/
+#define DECR 0x13     /* 19  "--"	*/
+#define CONV 0x14     /* 20  "->"	*/
+#define MINUS_U 0x15  /* 21  "-U"	*/
+#define DOT 0x16      /* 22  "."	*/
+#define MEMBER 0x16   /* Alias for use in class*/
+#define DOT_DOT 0x17  /* 23  ".."	*/
+#define DIV 0x18      /* 24  "/"	*/
+#define COLON 0x19    /* 25  ":"	*/
+#define COLON_U 0x1A  /* 26  ":U"	*/
+#define COLON_S 0x1B  /* 27  ":s"	*/
+#define SCOLON 0x1C   /* 28  ";"	*/
 #define T_SCOLON 0x1D /* 29  ";;"	*/
-#define LT       0x1E /* 30  "<"	*/
-#define LSHIFT   0x1F /* 31  "<<"	*/
-#define LEQ      0x20 /* 32  "<="	*/
-#define ASSIGN   0x21 /* 33  "="	*/
-#define ASMOD    0x22 /* 34  "=%"	*/
-#define ASAND    0x23 /* 35  "=&"	*/
-#define ASMUL    0x24 /* 36  "=*"	*/
-#define ASADD    0x25 /* 37  "=+"	*/
-#define ASSUB    0x26 /* 38  "=-"	*/
-#define ASDIV    0x27 /* 39  "=/"	*/
+#define LT 0x1E       /* 30  "<"	*/
+#define LSHIFT 0x1F   /* 31  "<<"	*/
+#define LEQ 0x20      /* 32  "<="	*/
+#define ASSIGN 0x21   /* 33  "="	*/
+#define ASMOD 0x22    /* 34  "=%"	*/
+#define ASAND 0x23    /* 35  "=&"	*/
+#define ASMUL 0x24    /* 36  "=*"	*/
+#define ASADD 0x25    /* 37  "=+"	*/
+#define ASSUB 0x26    /* 38  "=-"	*/
+#define ASDIV 0x27    /* 39  "=/"	*/
 #define ASLSHIFT 0x28 /* 40  "=<<"	*/
-#define EQL      0x29 /* 41  "=="	*/
+#define EQL 0x29      /* 41  "=="	*/
 #define ASRSHIFT 0x2A /* 42  "=>>"	*/
-#define ASEXOR   0x2B /* 43  "=^"	*/
-#define ASEOR    0x2C /* 44  "=|"	*/
-#define GT       0x2D /* 45  ">"	*/
-#define GEQ      0x2E /* 46  ">="	*/
-#define RSHIFT   0x2F /* 47  ">>"	*/
-#define QUEST    0x30 /* 48  "?"	*/
-#define ATGIGN   0x31 /* 49  "@"	*/
-#define CASE     0x32 /* 50  "[\\"	*/
-#define UNKNOWN  0x33 /* 51  "[a"	*/
-#define ENUM     0x34 /* 52  "[c"	*/
-#define EXPR     0x35 /* 53  "[e"	*/
-#define INIT     0x36 /* 54  "[i"	*/
-#define STRUCT   0x37 /* 55  "[s"	*/
-#define UNION    0x38 /* 56  "[u"	*/
-#define VAR      0x39 /* 57  "[v"	*/
-#define BXOR     0x3A /* 58  "^"	*/
-#define LBRACE   0x3B /* 59  "{"	*/
-#define BOR      0x3C /* 60  "|"	*/
-#define LOR      0x3D /* 61  "||"	*/
-#define RBRACE   0x3E /* 62  "}"	*/
-#define BNOT     0x3F /* 63  "~"	*/
-#define RECIP    0x40 /* 64  "RECIP"   */
-#define TYPE     0x41 /* 65  "TYPE"    */
-#define IDOP     0x42 /* 66  "ID"	*/
-#define CONST    0x43 /* 67  "CONST"   */
-#define FCONST   0x44 /* 68  "FCONST"  */
-#define USEREG   0x45 /* 69  "REG"     */
-#define INAREG   0x46 /* 70  "INAREG"  */
-#define BFIELD   0x47 /* 71  "BITFIELD"*/
-
+#define ASEXOR 0x2B   /* 43  "=^"	*/
+#define ASEOR 0x2C    /* 44  "=|"	*/
+#define GT 0x2D       /* 45  ">"	*/
+#define GEQ 0x2E      /* 46  ">="	*/
+#define RSHIFT 0x2F   /* 47  ">>"	*/
+#define QUEST 0x30    /* 48  "?"	*/
+#define ATGIGN 0x31   /* 49  "@"	*/
+#define CASE 0x32     /* 50  "[\\"	*/
+#define UNKNOWN 0x33  /* 51  "[a"	*/
+#define ENUM 0x34     /* 52  "[c"	*/
+#define EXPR 0x35     /* 53  "[e"	*/
+#define INIT 0x36     /* 54  "[i"	*/
+#define STRUCT 0x37   /* 55  "[s"	*/
+#define UNION 0x38    /* 56  "[u"	*/
+#define VAR 0x39      /* 57  "[v"	*/
+#define BXOR 0x3A     /* 58  "^"	*/
+#define LBRACE 0x3B   /* 59  "{"	*/
+#define BOR 0x3C      /* 60  "|"	*/
+#define LOR 0x3D      /* 61  "||"	*/
+#define RBRACE 0x3E   /* 62  "}"	*/
+#define BNOT 0x3F     /* 63  "~"	*/
+#define RECIP 0x40    /* 64  "RECIP"   */
+#define TYPE 0x41     /* 65  "TYPE"    */
+#define IDOP 0x42     /* 66  "ID"	*/
+#define CONST 0x43    /* 67  "CONST"   */
+#define FCONST 0x44   /* 68  "FCONST"  */
+#define USEREG 0x45   /* 69  "REG"     */
+#define INAREG 0x46   /* 70  "INAREG"  */
+#define BFIELD 0x47   /* 71  "BITFIELD"*/
 
 /* register indexes*/
-enum { /* REG_A=1, REG_C, REG_B, REG_E, REG_D, REG_L*/
-       REG_H = 7,
-       /* REG_IX, REG_IY, REG_SP */
-       REG_AF = 11,
-       /* REG_BC, REG_DE, REG_HL */
-       REG_DEHL = 15
+enum
+{ /* REG_A=1, REG_C, REG_B, REG_E, REG_D, REG_L*/
+  REG_H = 7,
+  /* REG_IX, REG_IY, REG_SP */
+  REG_AF = 11,
+  /* REG_BC, REG_DE, REG_HL */
+  REG_DEHL = 15
 };
 
 /* enums */
-enum psect { P_BSS = 1, P_TEXT, P_DATA };
+enum psect
+{
+    P_BSS = 1,
+    P_TEXT,
+    P_DATA
+};
 
 /*
  *	Structural declarations
  */
 
-typedef struct node {
+typedef struct node
+{
     uint8_t a_c0;
     uint8_t a_c1;
     uint8_t a_c2; /* two bits used */
@@ -188,19 +192,22 @@ typedef struct node {
     uint8_t a_reg[6];
     uint16_t a_i15;
     struct member *pm; /* pointer to member */
-    union {
+    union
+    {
         long l;               /* long */
         unsigned long ul;     /* unsigned long, to avoid cast*/
         struct node *np[2];   /* node pair */
         struct member *mp[2]; /* member pair */
-        struct {              /* string + int value */
+        struct
+        { /* string + int value */
             char *s;
             int v;
         } sv;
     } info;
 } node_t;
 
-typedef struct member {    /* Offset Member Description			*/
+typedef struct member
+{                          /* Offset Member Description			*/
     char *b_name;          /* +0   0 s_name Pointer to Name identifier 	*/
                            /* +1   1					*/
     char b_class;          /* +2   2 s_class 0x16 - MEMBER 	*/
@@ -215,8 +222,8 @@ typedef struct member {    /* Offset Member Description			*/
                            /*		            3 0001000 -	register?*/
                            /*		            4 0010000 -		*/
     uint8_t b_ndpth;       /* +4   4 s_ndpth Nesting depth of block	*/
-    uint8_t bWidth;          /* +5   5					*/
-    uint8_t bOffset;          /* +6   6					*/
+    uint8_t bWidth;        /* +5   5					*/
+    uint8_t bOffset;       /* +6   6					*/
     struct member *b_next; /* +7   7					*/
                            /* +8   8					*/
     uint16_t b_size;       /* +9   9 s_size Type size			*/
@@ -229,21 +236,25 @@ typedef struct member {    /* Offset Member Description			*/
                            /* +10 16					*/
     int b_off;             /* +11 17 s_alig Type alig  size stack frame	*/
                            /* +12 18					*/
-    union {                /* +13 18  - +14 19 */
+    union
+    { /* +13 18  - +14 19 */
         int16_t i;
-        struct _memb {
+        struct _memb
+        {
             int16_t cnt;
             struct member *vals[1];
-        } * mlist;
-        struct _memi {
+        } *mlist;
+        struct _memi
+        {
             int16_t cnt;
             int16_t vals[1];
-        } * ilist;
+        } *ilist;
     } b_memb;
     char b_flag; /* +15 21	 type flag 0, 1, 2, 3, 4, 5,	*/
 } member_t;
 
-struct codeFrag_t {
+struct codeFrag_t
+{
     char c_0;
     char c_1;
     char c_2;
@@ -293,11 +304,11 @@ extern bool wflag;               /* Warning messages */
 extern bool pflag;               /* Not used */
 extern bool hflag;               /* Not used */
 #endif
-extern int errcnt;               /* Number of errors */
+extern int errcnt; /* Number of errors */
 #if 0
 extern bool bflag;               /* Not used */
 #endif
-extern char *baseHeap;           /* Current highest memory */
+extern char *baseHeap; /* Current highest memory */
 #if 0
 extern bool eflag;               /* Not used */
 #endif
@@ -321,7 +332,7 @@ extern char *regNames[];
 /* ===== End of data section ======= */
 
 /*
- * Libbrary Function prototypes
+ * Library Function prototypes
  *
  */
 #ifdef CPM
@@ -352,7 +363,7 @@ int fputchar(int);
 #ifndef MINI
 /* lex.c -----------------------------------------------------*/
 int sub_13D(int, int);
-char searchToken(char *);
+char sub_1B2(char *);
 member_t **gethashptr(char *);
 member_t *sub_265(char *);
 char *getToken();
@@ -472,8 +483,6 @@ int sub_66BC(int, int, int, char *);
 #define vfprintf _doprnt
 #endif
 _Noreturn void fatalErr(char *fmt, ...); /* ok   sub_6AA2.c	*/
-_Noreturn void normalExit(void);
-
 void prWarning(char *fmt, ...);          /* ok sub_6AD0*/
 void prError(char *fmt, ...);            /* ok sub_6B1D.c	*/
 void prMsg(char *fmt, va_list args);

@@ -31,3 +31,5 @@ optim/optim
 p1/p1
 z80as/z80as.com
 zas/zas
+.DS_Store
+tests/.DS_Store

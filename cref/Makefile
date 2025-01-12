@@ -1,6 +1,5 @@
-TARGET = cpp
-SRCS = cpp.c cpy.c fname.c getargs.c
-HEADERS = cpp.h
+TARGET = cref
+SRCS = cref.c getargs.c fname.c
 
 CC = gcc
 CFLAGS = -Wall -Wextra -O3
@@ -12,15 +11,11 @@ CFLAGS += $(CFLAGS_EXTRA)
 
 OBJS = $(SRCS:.c=.o)
 
-all: $(TARGET)
-
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
 
-%.o: %.c $(HEADERS)
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS) $(TARGET)
-
-.PHONY: all clean

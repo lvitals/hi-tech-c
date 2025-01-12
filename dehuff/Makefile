@@ -1,6 +1,6 @@
-TARGET = cpp
-SRCS = cpp.c cpy.c fname.c getargs.c
-HEADERS = cpp.h
+TARGET = dehuff
+SRCS = dehuff.c decode.c misc.c fname.c getargs.c
+HEADERS = huff.h
 
 CC = gcc
 CFLAGS = -Wall -Wextra -O3

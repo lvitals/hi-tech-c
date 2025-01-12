@@ -48,7 +48,10 @@ extern struct symtab *lookup(char *, int);
 
 /* get args support */
 extern int _argc_;
-char **_getargs(char *_str, char *_name);
+#ifdef USE_GETARGS
+extern int _argc_;
+char **_getargs(char *_str, const char *_name);
+#endif
 char *fname(char *name);
 
 #endif /* _CPP_H */

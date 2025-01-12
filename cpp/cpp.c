@@ -11,6 +11,7 @@
 #ifdef CPM
 #include <unixio.h>
 #define O_RDONLY 0
+#define USE_GETARGS 1
 #endif
 
 #define STATIC static
@@ -1760,10 +1761,18 @@ int main(int argc, char *argv[]) {
 #ifndef CPM
     char *sysdir = NULL;
 #endif
-    if (argc == 1) {
+    // if (argc == 1) {
+    //     argv = _getargs(NULL, "cpp");
+    //     argc = _argc_;
+    // }
+
+    #ifdef USE_GETARGS
+    if (argc == 0)
+    {
         argv = _getargs(NULL, "cpp");
         argc = _argc_;
     }
+    #endif
     fin  = stdin; /* Mac OS X is not POSIX compliant (stdout nonconst.) */
     fout = stdout;
 
@@ -1802,6 +1811,12 @@ int main(int argc, char *argv[]) {
 #if defined(unix)
     dirs[0] = dirnams[0] = ".";
 #endif
+
+    if (argc == 1) {
+        fprintf(stderr, "Usage: cpp [options] [input-file [output-file]]\n");
+        exit(1);
+    }
+
     for (i = 1; i < argc && argv[i][0] == '-'; i++) {
         switch (toupper(argv[i][1])) {
         case 'P':
@@ -2046,26 +2061,25 @@ STATIC struct symtab *newsym() {
     return (syms++);
 }
 
-STATIC void usage() {
+STATIC void usage()
+{
     fprintf(stderr, "Usage: cpp [options] [input-file [output-file]]\n");
     fprintf(stderr, "Options:\n");
 
-    fprintf(stderr, "	-C	Pass all comments.\n");
-    fprintf(stderr, "	-Dname	Defines name as 1.\n");
-    fprintf(stderr, "	-Dname=var Defines name as val.\n");
-    fprintf(stderr, "	-H	Print the path names of include files on standard error.\n");
-    fprintf(stderr, "	-Idirectory Adds directory to the search path.\n");
-    fprintf(stderr, "	-M	Generate a list of dependencies and write them to the output.\n");
-    fprintf(stderr, "	-P	Do not include line control information in the preprocessor output.\n");
-    fprintf(stderr, "	-R	Allow recursive macros.\n");
-    fprintf(stderr, "  -Uname  Remove an initial definition of name..\n");
-    fprintf(stderr, "  -U  Remove all initially predefined macros.\n");
-
-    fprintf(stderr,
-            "	-Ydirectory Uses directory instead of the standard system include directory.\n");
-    fprintf(stderr, "   -h or --help print this usage information.\n");
-    fprintf(stderr, "	--noinclude Ignore standard system include path.\n");
-    fprintf(stderr, "   --version Show cpp version information.\n");
+    fprintf(stderr, "    -C          Pass all comments.\n");
+    fprintf(stderr, "    -Dname      Defines name as 1.\n");
+    fprintf(stderr, "    -Dname=var  Defines name as val.\n");
+    fprintf(stderr, "    -H          Print the path names of include files on standard error.\n");
+    fprintf(stderr, "    -Idirectory Adds directory to the search path.\n");
+    fprintf(stderr, "    -M          Generate a list of dependencies and write them to the output.\n");
+    fprintf(stderr, "    -P          Do not include line control information in the preprocessor output.\n");
+    fprintf(stderr, "    -R          Allow recursive macros.\n");
+    fprintf(stderr, "    -Uname      Remove an initial definition of name.\n");
+    fprintf(stderr, "    -U          Remove all initially predefined macros.\n");
+    fprintf(stderr, "    -Ydirectory Uses directory instead of the standard system include directory.\n");
+    fprintf(stderr, "    -h or --help Print this usage information.\n");
+    fprintf(stderr, "    --noinclude Ignore standard system include path.\n");
+    fprintf(stderr, "    --version   Show cpp version information.\n");
     exit(0);
 }
 #endif

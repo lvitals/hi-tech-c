@@ -33,3 +33,7 @@ z80as/z80as.com
 zas/zas
 .DS_Store
 tests/.DS_Store
+tests/HELLO.COM
+tests/HELLO.OBJ
+tests/HELLO1.TMP
+tests/HELLO2.TMP

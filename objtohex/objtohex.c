@@ -12,34 +12,32 @@
 #include <unistd.h>
 #endif
 
-uint8_t order32[4] = {0, 1, 2, 3}; /* 5a61 */
-uint8_t order16[2] = {0, 1};       /* 5a65 */
+uint8_t order32[4] = {0, 1, 2, 3};
+uint8_t order16[2] = {0, 1};
 
 struct
 {
     char *name;
     long val;
 } marker[] = {
-    {"__Htext", 0},  /* 0 */
-    {"__Hdata", 0},  /* 1 */
-    {"__Hbss", 0},   /* 2 */
-    {"__Ldata", 0},  /* 3 */
-    {"__Hstack", 0}, /* 4 */
-    {"__Bstack", 0}, /* 5 */
-    {"__Bdata", 0},  /* 6 */
-    {"__H_TEXT", 0}  /* 7 */
+    {"__Htext", 0},
+    {"__Hdata", 0},
+    {"__Hbss", 0},
+    {"__Ldata", 0},
+    {"__Hstack", 0},
+    {"__Bstack", 0},
+    {"__Bdata", 0},
+    {"__H_TEXT", 0}
 };
 
-char *objFile = "l.obj";       /* 5bac */
-char *hexFile = "l.hex";       /* 5bae */
-char *relocSegName = "__Lbss"; /* 5bb0 */
-char relocTmp[] = "reloc.$$$"; /* 5bb2 */
-char sym1[] = "sym1.$$$";      /* 5bbc */
-char sym2[] = "sym2.$$$";      /* 5bc5 */
-char swap[] = "swap.$$$";      /* 5bce */
-
-/* Accessors for above */
-
+char *objFile = "l.com";
+char *hexFile = "l.hex";
+char *relocSegName = "__Lbss";
+char relocTmp[] = "reloc.$$$";
+char sym1[] = "sym1.$$$";
+char sym2[] = "sym2.$$$";
+char swap[] = "swap.$$$";
+/* accessors for above */
 #define Htext marker[0].val
 #define Hdata marker[1].val
 #define Hbss marker[2].val
@@ -49,10 +47,10 @@ char swap[] = "swap.$$$";      /* 5bce */
 #define Bdata marker[6].val
 #define H_text marker[7].val
 
-uint8_t b6039[9];    /* 6039 */
-long dw6042;         /* 6042 */
-bool blkLoaded[256]; /* 6046 */
-bool sOpt;           /* 6146 */
+uint8_t b6039[9];
+long dw6042;
+bool blkLoaded[256];
+bool sOpt;
 
 struct
 {
@@ -63,98 +61,90 @@ struct
     unsigned int offset;
 } chkSumList[64];
 
-bool b63C7;        /* 63c7 */
-long dw63C8;       /* 63c8 */
-bool mOpt;         /* 63cc */
-uint32_t _Htext;   /* 63cd */
-FILE *symFp;       /* 63d1 */
-bool lOpt;         /* 63d3 */
-bool b63D4;        /* 63d4 */
-char *progname;    /* 63d5 */
-bool aOpt;         /* 63d7 */
-int16_t w63D8;     /* 63d8 */
-FILE *relocFp;     /* 63da */
-uint8_t w63DC[28]; /* 63dc */
-char *w63F8;       /* 63f8 */
+bool b63C7;
+long dw63C8;
+bool mOpt;
+uint32_t _Htext;
+FILE *symFp;
+bool lOpt;
+bool b63D4;
+char *progname;
+bool aOpt;
+int16_t w63D8;
+FILE *relocFp;
+uint8_t w63DC[28];
+char *w63F8;
 uint8_t *blkBuf[256];
 uint16_t extSegment;
 long imageOffset;
 uint32_t _Ltext;
-bool hOpt;                  /* 6604 */
-uint8_t b6605[128 - 9 - 9]; /* 6605 */
-bool binaryImage;           /* 6673 */
-int16_t w6674;              /* 6674 */
-bool iOpt;                  /* 6676 */
-bool cOpt;                  /* 6677 */
-uint8_t r6678[10];          /* 6678 */
+bool hOpt;
+uint8_t b6605[128 - 9 - 9];
+bool binaryImage;
+int16_t w6674;
+bool iOpt;
+bool cOpt;
+uint8_t r6678[10];
 long startAddr;
 bool hasOffset;
 uint8_t recType;
 uint16_t recLen;
-long dw668A; /* 668a */
+long dw668A;
 int16_t nreloc;
-bool pOpt;        /* 6690 */
-uint8_t b6691[9]; /* 6691 */
+bool pOpt;
+uint8_t b6691[9];
 long wrPos;
 long maxStack;
 uint8_t recData[512 - 3];
 int16_t chkIdx;
-uint8_t b68A1[32]; /* 68a1 */
-int16_t swapFd;    /* 68c1 */
-bool hasReloc;     /* 68c3 */
-bool eOpt;         /* 68c4 */
-FILE *sym2Fp;      /* 68c5 */
-bool rOpt;         /* 68c7 */
+uint8_t b68A1[32];
+int16_t swapFd;
+bool hasReloc;
+bool eOpt;
+FILE *sym2Fp;
+bool rOpt;
 uint8_t exeHdr[512];
 
-/****************************************************************
- * Prototype functions are located in sequence of being in
- * original binary image of OBJTOHEX.COM
- ****************************************************************/
-int main(int argc, char **argv);              /*  1 sub_013d  */
-void sub_DB2(void);                           /*  2 sub_DB2	*/
-void doFile(void);                            /*  3 		*/
-long sub_10DB(void);                          /*  4 sub_10DB	*/
-void sub_1503(void);                          /*  5 sub_1503	*/
-void sub_1621(void);                          /*  6 sub_1621	*/
-void loadBlk(int16_t blkNum);                 /*  		*/
-void u32tob(uint8_t *buf, long n);            /*  		*/
-void i16tob(uint8_t *buf, uint16_t n);        /*  		*/
-void outHex2(uint16_t n);                     /*  		*/
-void outHex4(uint16_t n);                     /*  		*/
-void doStart(void);                           /*  		*/
-void doSym(void);                             /*  		*/
-void doReloc(void);                           /*  		*/
-void putMem(uint8_t *, uint32_t, uint16_t);   /*  		*/
-void doIdent(void);                           /*  		*/
-void doText(void);                            /*  		*/
-void readRec(void);                           /*  		*/
-int16_t btoi16(uint8_t *buf);                 /*  		*/
-uint32_t btou32(uint8_t *buf);                /*  		*/
-void rmWorkFiles(void);                       /*  		*/
-_Noreturn void fatalErr(char *fmt, ...);      /*  		*/
-void parseChecksumList(void);                 /*  		*/
-int sub_2636(const void *p1, const void *p2); /*  sub_2636 	*/
-void sub_2692(void);                          /*  sub_2692	*/
-void sub_2AD1(void);                          /*  sub_2AD1	*/
-bool parseAddr(char *buf, long *pVal);        /*  		*/
-void *xalloc(size_t size);                    /*  		*/
-int geti16le(FILE *);                         /*  		*/
-int puti16le(int w, FILE *stream);            /*  		*/
+int main(int argc, char **argv);
+void sub_DB2(void);
+void doFile(void);
+long sub_10DB(void);
+void sub_1503(void);
+void sub_1621(void);
+void loadBlk(int16_t blkNum);
+void u32tob(uint8_t *buf, long n);
+void i16tob(uint8_t *buf, uint16_t n);
+void outHex2(uint16_t n);
+void outHex4(uint16_t n);
+void doStart(void);
+void doSym(void);
+void doReloc(void);
+void putMem(uint8_t *buf, uint32_t loc, uint16_t len);
+void doIdent(void);
+void doText(void);
+void readRec(void);
+int16_t btoi16(uint8_t *buf);
+uint32_t btou32(uint8_t *buf);
+void rmWorkFiles(void);
+_Noreturn void fatalErr(const char *fmt, ...);
+void parseChecksumList(void);
+int sub_2636(const void *p1, const void *p2);
+void sub_2692(void);
+void sub_2AD1(void);
+bool parseAddr(char *buf, long *pVal);
+void *xalloc(size_t size);
+int geti16le(FILE *);
+int puti16le(int w, FILE *stream);
 
-/**************************************************************************
- 1	main		sub_013dh	ok
- **************************************************************************/
 int main(int argc, char **argv)
 {
     int16_t offset;
     int16_t blkIdx;
     long remaining;
     uint16_t cnt;
-    uint16_t crc;
+    uint16_t crc = 0; // avoid compiler warning
     long curAddr;
     char *wrMode;
-
     progname = "objto";
     swapFd = -1;
     wrMode = "w";
@@ -162,11 +152,11 @@ int main(int argc, char **argv)
     {
         switch (argv[1][1])
         {
-        case 'm': /* Motorola HEX */
+        case 'm':
         case 'M':
             mOpt = true;
             break;
-        case 'e': /* MS-DOS .EXE */
+        case 'e':
         case 'E':
             eOpt = true;
             if (argv[1][2])
@@ -178,7 +168,7 @@ int main(int argc, char **argv)
             }
             wrMode = "wb";
             break;
-        case '8': /* */
+        case '8':
             b63D4 = true;
             eOpt = true;
             if (argv[1][2])
@@ -190,12 +180,12 @@ int main(int argc, char **argv)
             }
             wrMode = "wb";
             break;
-        case 'a': /* a.out Unix */
+        case 'a':
         case 'A':
             aOpt = true;
             wrMode = "wb";
             break;
-        case 'b': /* Bbase */
+        case 'b':
         case 'B':
             binaryImage = true;
             wrMode = "wb";
@@ -208,17 +198,17 @@ int main(int argc, char **argv)
                     hasOffset = true;
             }
             break;
-        case 'l': /* Large model */
+        case 'l':
         case 'L':
             lOpt = true;
             /* FALLTHRU */
-        case 'r': /* R */
+        case 'r':
         case 'R':
             rOpt = true;
             if (argv[1][2])
                 relocSegName = argv[1] + 2;
             break;
-        case 's': /* CP/M-86 .CMD */
+        case 's':
         case 'S':
             if (pOpt)
                 sOpt = true;
@@ -227,19 +217,19 @@ int main(int argc, char **argv)
             else
                 w63F8 = argv[1] + 2;
             break;
-        case 'i': /* Intel HEX */
+        case 'i':
         case 'I':
             iOpt = true;
             break;
-        case 'h': /* */
+        case 'h':
         case 'H':
             hOpt = true;
             break;
-        case 'c': /* ckfile */
+        case 'c':
         case 'C':
             cOpt = true;
             break;
-        case 'p': /* Atari ST */
+        case 'p':
         case 'P':
             pOpt = true;
             if (argv[1][2])
@@ -268,11 +258,11 @@ int main(int argc, char **argv)
                 fatalErr("Usage: objtohex [-ssymfile] [object-file [hex-file]]");
         }
     }
-
     if (pOpt && rOpt)
         lOpt = true;
 
-    if ((w63F8 && (iOpt || aOpt || pOpt)) || ((aOpt || pOpt) && (iOpt || hOpt || eOpt)) || (aOpt && pOpt))
+    if ((w63F8 && (iOpt || aOpt || pOpt)) || ((aOpt || pOpt) && (iOpt || hOpt || eOpt)) ||
+        (aOpt && pOpt))
         fatalErr("Bad combination of flags");
     if (aOpt || (pOpt && sOpt))
     {
@@ -281,7 +271,6 @@ int main(int argc, char **argv)
         if (!(sym2Fp = fopen(sym2, "wb")))
             fatalErr("cannot open %s", sym2);
     }
-
     if (pOpt)
         w63F8 = 0;
     if (cOpt)
@@ -297,24 +286,18 @@ int main(int argc, char **argv)
     if (rOpt && !(relocFp = fopen(relocTmp, "wb")))
         fatalErr("Cannot open %s", relocTmp);
     startAddr = _Ltext = 0x3ffff;
-
     doFile();
-
     if (!pOpt)
         sub_2692();
-
     sub_2AD1();
-
     if (startAddr == 0x3ffff)
         startAddr = _Ltext;
     blkIdx = _Ltext >> 10;
     offset = _Ltext & 0x3ff;
     remaining = _Htext - _Ltext;
     curAddr = _Ltext;
-
     if (Htext < H_text)
         Htext = H_text;
-
     if (aOpt)
     {
         if (curAddr != 0)
@@ -340,7 +323,6 @@ int main(int argc, char **argv)
     }
     else if (binaryImage && !hasOffset)
         imageOffset = curAddr;
-
     if (mOpt)
     {
         cnt = (int16_t)strlen(objFile);
@@ -498,17 +480,13 @@ int main(int argc, char **argv)
     for (blkIdx = 0; blkIdx != 0x100; blkIdx++)
         if (blkLoaded[blkIdx])
             free(blkBuf[blkIdx]);
-
     sub_DB2();
-
     if (pOpt && nreloc)
         sub_2692();
-
     if (!binaryImage)
         fputc('\n', stdout);
 
     rmWorkFiles();
-
     if (fclose(stdout) == EOF)
     {
         fprintf(stderr, "Error closing output file\n");
@@ -517,9 +495,6 @@ int main(int argc, char **argv)
     exit(0);
 }
 
-/**************************************************************************
- 2	sub-0db2h			ok	Used only in main function
- **************************************************************************/
 void sub_DB2()
 {
     uint16_t remaining;
@@ -529,7 +504,6 @@ void sub_DB2()
     if (aOpt)
     {
         fclose(sym2Fp);
-
         if (!freopen(sym2, "r", stdin))
             fatalErr("Cannot open %s");
         /* note original code cast the two addresses below to (long *)
@@ -538,7 +512,6 @@ void sub_DB2()
          * here btou32 is used to ensure compatibility
          */
         fseek(stdout, btou32(b68A1 + 8) + btou32(b68A1 + 4) + 32, 0);
-
         for (remaining = w6674 * 10; remaining; remaining -= blkSize)
         {
             if ((blkSize = 512) > remaining)
@@ -548,9 +521,7 @@ void sub_DB2()
             if (fwrite(buf, 1, blkSize, stdout) != blkSize)
                 fatalErr("Write error on %s", hexFile);
         }
-
         puti16le(w63D8, stdout);
-
         if (!freopen(sym1, "r", stdin))
             fatalErr("Cannot open %s", sym1);
 
@@ -563,12 +534,9 @@ void sub_DB2()
         return;
 
     fclose(sym2Fp);
-
     if (!freopen(sym2, "rb", stdin))
         fatalErr("Cannot open %s", sym2);
-
     fseek(stdout, dw6042, 0);
-
     for (remaining = w6674 * 14; remaining; remaining -= blkSize)
     {
         blkSize = 512;
@@ -582,16 +550,6 @@ void sub_DB2()
     fclose(stdin);
 }
 
-#define TEXT_RECORD 1
-#define RELOC_RECORD 3
-#define SYM_RECORD 4
-#define START_RECORD 5
-#define END_RECORD 6
-#define IDENT_RECORD 7
-
-/**************************************************************************
- 3	doFile		sub-10a0h	ok
- **************************************************************************/
 void doFile()
 {
     do
@@ -599,23 +557,23 @@ void doFile()
         readRec();
         switch (recType)
         {
-        case TEXT_RECORD:
+        case 1:
             doText();
             break;
-        case START_RECORD:
+        case 5:
             doStart();
             break;
-        case SYM_RECORD:
+        case 4:
             doSym();
             break;
-        case RELOC_RECORD:
+        case 3:
             doReloc();
             break;
-        case IDENT_RECORD:
+        case 7:
             doIdent();
             break;
         }
-    } while (recType != END_RECORD);
+    } while (recType != 6);
 }
 
 #define O_SIG 0
@@ -630,9 +588,6 @@ void doFile()
 #define O_IP 20
 #define O_RELOCPOS 24
 
-/**************************************************************************
- 4	sub_10DB			ok
- **************************************************************************/
 long sub_10DB()
 {
     long totalSize;
@@ -717,12 +672,8 @@ long sub_10DB()
     return -relocSize;
 }
 
-/**************************************************************************
- 5	sub_1503			ok
- **************************************************************************/
 void sub_1503()
 {
-
     if (_Ltext != 0)
         fatalErr("Text does not start at 0");
     if (maxStack != 0)
@@ -742,12 +693,8 @@ void sub_1503()
     wrPos = dw6042 + w6674 * 14;
 }
 
-/**************************************************************************
- 6	sub_1621			ok
- **************************************************************************/
 void sub_1621()
 {
-
     i16tob(b68A1, 0x109);
     i16tob(b68A1 + 2,
            (int16_t)Ldata); /* note bug in original code, was u32tob but over written below */
@@ -760,9 +707,6 @@ void sub_1621()
     fwrite(b68A1, 32, 1, stdout);
 }
 
-/**************************************************************************
- 7	loadBlk		sub_16ffh	ok
- **************************************************************************/
 void loadBlk(int16_t blkNum)
 {
     uint8_t *buf = NULL;
@@ -796,50 +740,31 @@ void loadBlk(int16_t blkNum)
     blkLoaded[blkNum] = 1;
 }
 
-/**************************************************************************
- 8	u32tob		sub_18e0h	ok
- **************************************************************************/
 void u32tob(uint8_t *buf, long n)
 {
-
     buf[order32[0]] = (uint8_t)n;
     buf[order32[1]] = (uint8_t)(n >> 8);
     buf[order32[2]] = (uint8_t)(n >> 16);
     buf[order32[3]] = (uint8_t)(n >> 24);
 }
 
-/**************************************************************************
- 9	i16tob		sub_1954h	ok++
- **************************************************************************/
 void i16tob(uint8_t *buf, uint16_t n)
 {
-
     buf[order16[0]] = n % 256;
     buf[order16[1]] = n / 256;
 }
 
-/**************************************************************************
-    i16tole		sub_     	ok
- **************************************************************************/
 void i16tole(char *buf, uint16_t n)
 {
-
     buf[0] = (char)n;
     buf[1] = n >> 8;
 }
 
-/**************************************************************************
-    letoi16		sub_     	ok
- **************************************************************************/
 int16_t letoi16(uint8_t *buf)
 {
-
     return buf[0] + buf[1] * 256;
 }
 
-/**************************************************************************
- 10	outHex2		sub_1985h	ok
- **************************************************************************/
 void outHex2(uint16_t n)
 {
     static char digits[] = "0123456789ABCDEF";
@@ -848,28 +773,17 @@ void outHex2(uint16_t n)
     fputc(digits[n & 0xf], stdout);
 }
 
-/**************************************************************************
- 11	outHex4		sub_19d2h	ok
- **************************************************************************/
 void outHex4(uint16_t n)
 {
-
     outHex2(n >> 8);
     outHex2(n);
 }
 
-/**************************************************************************
- 12	doStart		sub_19f1h	ok
- **************************************************************************/
 void doStart()
 {
-
     startAddr = btou32(recData);
 }
 
-/**************************************************************************
- 13	doSym		sub_1a01h	ok
- **************************************************************************/
 void doSym()
 {
     uint8_t *pname;
@@ -977,6 +891,8 @@ void doSym()
             u32tob(symEntry + 10, varE);
             switch (*pname)
             {
+            default:
+                fprintf(stderr, "Unexpected *pname '%c' %s line %d\n", *pname, __FILE__, __LINE__);
             case '_':
             case 't':
                 var23 = 0xa200;
@@ -1017,9 +933,6 @@ void doSym()
     }
 }
 
-/**************************************************************************
- 14	doReloc		sub_1ed2h	ok
- **************************************************************************/
 void doReloc()
 {
     int16_t var2;
@@ -1060,9 +973,6 @@ void doReloc()
     }
 }
 
-/**************************************************************************
- 15	putMem		sub_1fdeh	ok
- **************************************************************************/
 void putMem(uint8_t *buf, uint32_t loc, uint16_t len)
 {
     uint16_t n;
@@ -1089,22 +999,15 @@ void putMem(uint8_t *buf, uint32_t loc, uint16_t len)
     }
 }
 
-/**************************************************************************
- 16	doIdent		sub_2188h	ok
- **************************************************************************/
 void doIdent()
 {
     uint8_t i;
-
     for (i = 0; i < 4; i++)
         order32[i] = recData[i];
     for (i = 0; i < 2; i++)
         order16[i] = recData[i + 4];
 }
 
-/**************************************************************************
- 17 	doText		sub_21d5h	ok
- **************************************************************************/
 void doText()
 {
     uint32_t offset;
@@ -1127,9 +1030,6 @@ void doText()
     }
 }
 
-/**************************************************************************
- 18 	readRec		sub_22f2h	ok
- **************************************************************************/
 void readRec()
 {
     uint8_t hdr[3];
@@ -1145,18 +1045,11 @@ void readRec()
         fatalErr("incomplete record");
 }
 
-/**************************************************************************
- 19	btoi16		sub_237bh	ok
- **************************************************************************/
 int16_t btoi16(uint8_t *buf)
 {
-
     return buf[order16[1]] * 256 + buf[order16[0]];
 }
 
-/**************************************************************************
- 20	btou32		sub_23a9h	ok
- **************************************************************************/
 uint32_t btou32(uint8_t *buf)
 {
     uint32_t val;
@@ -1169,12 +1062,8 @@ uint32_t btou32(uint8_t *buf)
     return val;
 }
 
-/**************************************************************************
- 21	rmWorkFiles	sub_2413h	ok
- **************************************************************************/
 void rmWorkFiles()
 {
-
     if (rOpt)
         unlink(relocTmp);
     if (swapFd >= 0)
@@ -1190,12 +1079,8 @@ void rmWorkFiles()
     }
 }
 
-/**************************************************************************
- 22	fatal_err	sub_2451h	ok
- **************************************************************************/
-void fatalErr(char *fmt, ...)
+void fatalErr(const char *fmt, ...)
 {
-
     fprintf(stderr, "%s: ", progname);
     va_list args;
     va_start(args, fmt);
@@ -1206,9 +1091,6 @@ void fatalErr(char *fmt, ...)
     exit(1);
 }
 
-/**************************************************************************
- 23	parseChecksumList sub_24aeh	ok
- **************************************************************************/
 void parseChecksumList()
 {
     unsigned int addr1;
@@ -1266,12 +1148,8 @@ void parseChecksumList()
     return;
 }
 
-/**************************************************************************
- 24	sub_2636			ok
- **************************************************************************/
 int sub_2636(const void *p1, const void *p2)
 {
-
     if (*(uint32_t *)p1 == *(uint32_t *)p2)
         return 0;
     if (*(uint32_t *)p1 < *(uint32_t *)p2)
@@ -1279,9 +1157,6 @@ int sub_2636(const void *p1, const void *p2)
     return 1;
 }
 
-/**************************************************************************
- 25	sub_2692			ok
- **************************************************************************/
 void sub_2692()
 {
     uint8_t var4[4];
@@ -1376,9 +1251,6 @@ void sub_2692()
     fclose(relocFp);
 }
 
-/**************************************************************************
- 26	sub_2AD1			ok
- **************************************************************************/
 /* the original code here has a flaw which propogates from the parseCheckSumList
  * in the original code crc, loc and the addrX, whereX and offset are all 16 bit
  * whilest the address locations are ok for 8/16 bit targets the crc and ideally
@@ -1426,9 +1298,6 @@ void sub_2AD1()
     }
 }
 
-/**************************************************************************
- 27	parseAddr	sub_2d29h	ok
- **************************************************************************/
 bool parseAddr(char *buf, long *pVal)
 {
     char ch;
@@ -1481,9 +1350,6 @@ bool parseAddr(char *buf, long *pVal)
     return false;
 }
 
-/**************************************************************************
- 28	xalloc		sub_2efa	ok
- **************************************************************************/
 void *xalloc(size_t size)
 {
     register char *ptr;
@@ -1494,24 +1360,16 @@ void *xalloc(size_t size)
     return ptr;
 }
 
-/**************************************************************************
- 29	geti16le	sub_    	ok
- **************************************************************************/
 int geti16le(FILE *fp)
 {
     uint8_t buf[2];
-
     if (fread(buf, sizeof(buf), 1, fp) != 1)
         return EOF;
     return buf[0] + buf[1] * 256;
 }
 
-/**************************************************************************
- 30	puti16le	sub_    	ok
- **************************************************************************/
 int puti16le(int w, FILE *fp)
 {
-
     if (putc(w & 0xFF, fp) == EOF || putc((w >> 8) & 0xFF, fp) == EOF)
         return (EOF);
     return (w);

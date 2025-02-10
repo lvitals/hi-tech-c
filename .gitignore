@@ -37,3 +37,8 @@ tests/HELLO.COM
 tests/HELLO.OBJ
 tests/HELLO1.TMP
 tests/HELLO2.TMP
+tests/test.com
+tests/test.obj
+tests/test1.tmp
+tests/test2.tmp
+tests/EXAMPLE.TXT

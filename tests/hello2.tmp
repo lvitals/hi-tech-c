@@ -1,0 +1,15 @@
+global	_main
+global	ncsv, cret, indir
+global	_printf
+psect	text
+_main:
+ld	hl,19f
+push	hl
+call	_printf
+pop	bc
+ld	hl,0
+ret	
+psect	data
+19:
+defb	10,72,101,108,108,111,44,32,119,111,114,108,100,10,0
+psect	text

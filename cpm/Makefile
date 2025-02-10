@@ -1,6 +1,6 @@
 OBJEXT = .o
 BINEXT =
-CC = clang
+CC = gcc
 CFLAGS = -g -Wall
 
 cpm: cpm$(OBJEXT)

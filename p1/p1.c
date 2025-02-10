@@ -71,8 +71,10 @@ int main(int argc, char *argv[]) {
         switch (argv[0][1]) {
         case 'E':
         case 'e':
-            if (!freopen(*argv + 2, "a", stderr))
-                ;
+            if (!freopen(*argv + 2, "a", stderr)) {
+                exit(EXIT_FAILURE);
+            }
+                
             setbuf(stderr, errBuf);
             break;
         case 'S':

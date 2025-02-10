@@ -1168,7 +1168,6 @@ char *getToken()
 // #pragma GCC diagnostic ignored "-Wstringop-truncation"
 #endif
             strncpy(progname, buffer, sizeof(progname) - 1);
-            progname[sizeof(progname) - 1] = '\0';
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -2206,7 +2205,6 @@ void parseVariable()
     case 'R': /* register	*/
     case 'r':
         sb->b_sloc |= 8;
-        break;
     case 'P': /* pointer	*/
     case 'p':
         sb->b_flag = 5;
@@ -2710,9 +2708,7 @@ int sub_1F4B(node_t *p1a, int p2, int p3, int p4, int *p5)
 
         p1a->a_c3[p1a->a_c1++] = (uint8_t)(sz - codeFrag);
         n = (uint8_t)sub_2B79(p1a);
-        if (p1a->a_c1 > 0 && p1a->a_c1 <= 6) {
-            p1a->a_reg[p1a->a_c1 - 1] = n;
-        }
+        p1a->a_reg[p1a->a_c1 - 1] = n;
         if (n == 0 && p1a->a_c0 == USEREG)
             p1a->a_reg[p1a->a_c1 - 1] = n = p1a->info.l;
         /* clang-format off */
@@ -4086,12 +4082,10 @@ uint8_t sub_47B2(register node_t *sa, int p2)
     {
     case MUL_U:
         sa = sa->info.np[1];
-        break;
     case T_SCOLON:
         return sa->info.l >= 1L && sa->info.l < 3L;
     case RPAREN:
         sa = sa->info.np[0];
-        break;
     case MOD:
         if (nodesize(sa) == 2 && !sub_3968(sa))
             return true;
@@ -4102,7 +4096,6 @@ uint8_t sub_47B2(register node_t *sa, int p2)
         goto m485f;
     case MUL:
         sa = sa->info.np[0];
-        break;
     case DOLLAR_U:
     m485f:
         if (nodesize(sa) == 4 && !sub_3968(sa))
@@ -4110,7 +4103,6 @@ uint8_t sub_47B2(register node_t *sa, int p2)
         break;
     case SCOLON:
         sa = sa->info.np[0];
-        break;
     case DOLLAR:
         return sub_3968(sa);
     case ADD:
@@ -4127,7 +4119,6 @@ uint8_t sub_47B2(register node_t *sa, int p2)
         return l1 < 0 && l1 >= -4L;
     case LPAREN:
         sa = sa->info.np[1];
-        break;
     case HASHSIGN:
         return nodesize(sa) == 1 && !sub_3968(sa);
     case MINUS_U:
@@ -4844,7 +4835,6 @@ node_t *sub_5F52(register node_t *sa)
             sa->info.np[0] = sa->info.np[1];
             sa->info.np[1] = l2;
         }
-        break;
     case ASADD:
         if (sa->info.np[1]->a_c0 == MINUS_U)
         {
@@ -4852,7 +4842,6 @@ node_t *sub_5F52(register node_t *sa)
             sa->info.np[1] = sa->info.np[1]->info.np[0];
             sa->a_c0 = sa->a_c0 == ASADD ? ASSUB : SUB;
         }
-        break;
     }
 
     return sa;

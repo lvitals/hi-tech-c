@@ -114,7 +114,6 @@ void print_list(struct Node* head) {
 // Function to demonstrate linked list usage
 void linked_list_example() {
     struct Node* head;
-    struct Node* temp;
 
     head = create_node(1);
     head->next = create_node(2);

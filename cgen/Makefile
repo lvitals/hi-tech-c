@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O3
-ifeq ($(shell uname), Linux)
-  CFLAGS += -Wno-implicit-fallthrough -Wno-stringop-truncation -Wno-stringop-overflow
-endif
+# ifeq ($(shell uname), Linux)
+#   CFLAGS += -Wno-implicit-fallthrough -Wno-stringop-truncation -Wno-stringop-overflow
+# endif
 SRCS = cgen.c
 OBJS = $(SRCS:.c=.o)
 

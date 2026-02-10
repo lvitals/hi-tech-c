@@ -3,7 +3,7 @@ SRCS = enhuff.c encode.c misc.c fname.c getargs.c
 HEADERS = huff.h
 
 CC = gcc
-CFLAGS = -Wall -Wextra -O3
+CFLAGS = -Wall -Wextra -O3 -std=c89
 CFLAGS_EXTRA = -DUSE_GETARGS
 
 # Enable _getargs functionality for handling long command lines (necessary for legacy systems like CP/M)

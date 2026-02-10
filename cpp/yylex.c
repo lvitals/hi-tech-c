@@ -134,7 +134,7 @@ LOCAL int tobinary(char *st, int b) {
         case 'e':
         case 'f':
             t = c - 'a' + 10;
-            // if (b > 10)
+            /* if (b > 10) */
                 break;
         case 'A':
         case 'B':
@@ -143,7 +143,7 @@ LOCAL int tobinary(char *st, int b) {
         case 'E':
         case 'F':
             t = c - 'A' + 10;
-            // if (b > 10)
+            /* if (b > 10) */
                 break;
         default:
             t = -1;

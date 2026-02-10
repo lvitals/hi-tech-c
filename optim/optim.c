@@ -312,29 +312,29 @@ YYSTYPE yylval;              /* 6fb1	Contains different types of data */
 int symbolId;                /* 6fb3	??? used only in sub_0ca2 */
 sym_t *gPs;                  /* 6fb5	??? */
 inst_t *gPi;                 /* 6fb7 */
-// moved to static in function  int word_6fb9; /* 6fb9	??? */
+/* moved to static in function  int word_6fb9; ??? */
 bool hasChanged;          /* 6fbb */
 bool usesIXorIY;          /* 6fbc */
 int optimiseCounters[18]; /* 6fbd	Array of counters types of optimizations */
 enum {
-    O_RED_LAB = 0,   /*	  6fbd //  0 Redundant labels */
-    O_JMP_TO_JMP,    /*	  6fbf //  1 Jumps to jumps */
-    O_STK_ADJUST,    /*	  6fc1 //  2 Stack adjustments */
-    O_TMP_LAB,       /*	  6fc3 //  3 Temporary labels */
-    O_UNREF_LAB,     /*	  6fc5 //  4 Unref'ed labels */
-    O_UNREACH_LAB,   /*	  6fc7 //  5 Unreachable code */
-    O_JMP_TO_PLUS1,  /*	  6fc9 //  6 Jumps to .+1 */
-    O_SKIP_OVER_JMP, /*	  6fcb //  7 Skips over jumps */
-    O_CMN_CODE_SEQ,  /*	  6fcd //  8 Common code seq's */
-    O_RED_EXX,       /*	  6fcf //  9 Redundant exx's */
-    O_EX_SPHL,       /*	  6fd1 // 10 Ex (sp),hl's used */
-    O_RED_OPS,       /*	  6fd3 // 11 Redundant operations */
-    O_RED_LD,        /*	  6fd5 // 12 Redundant loads/stores */
-    O_SIMPLE_ADDR,   /*	  6fd7 // 13 Simplified addresses */
-    O_XOR_A,         /*	  6fd9 // 14 Xor a's used */
-    O_RED_EX_DEHL,   /*	  6fdb // 15 Redundant ex de,hl's */
-    O_CODE_MOTIONS,  /*	  6fdd // 16 Code motions */
-    O_LOOPS_INV      /*	  6fdf // 17 Loops inverted */
+    O_RED_LAB = 0,   /*	  6fbd   0 Redundant labels */
+    O_JMP_TO_JMP,    /*	  6fbf   1 Jumps to jumps */
+    O_STK_ADJUST,    /*	  6fc1   2 Stack adjustments */
+    O_TMP_LAB,       /*	  6fc3   3 Temporary labels */
+    O_UNREF_LAB,     /*	  6fc5   4 Unref'ed labels */
+    O_UNREACH_LAB,   /*	  6fc7   5 Unreachable code */
+    O_JMP_TO_PLUS1,  /*	  6fc9   6 Jumps to .+1 */
+    O_SKIP_OVER_JMP, /*	  6fcb   7 Skips over jumps */
+    O_CMN_CODE_SEQ,  /*	  6fcd   8 Common code seq's */
+    O_RED_EXX,       /*	  6fcf   9 Redundant exx's */
+    O_EX_SPHL,       /*	  6fd1  10 Ex (sp),hl's used */
+    O_RED_OPS,       /*	  6fd3  11 Redundant operations */
+    O_RED_LD,        /*	  6fd5  12 Redundant loads/stores */
+    O_SIMPLE_ADDR,   /*	  6fd7  13 Simplified addresses */
+    O_XOR_A,         /*	  6fd9  14 Xor a's used */
+    O_RED_EX_DEHL,   /*	  6fdb  15 Redundant ex de,hl's */
+    O_CODE_MOTIONS,  /*	  6fdd  16 Code motions */
+    O_LOOPS_INV      /*	  6fdf  17 Loops inverted */
 };
 
 list_t *freeOperandList; /* 6fe1	struct size 6 */
@@ -347,7 +347,7 @@ int expectCond;          /* 6fec	ok */
 inst_t *word_6fee;       /* 6fee */
 int tokType;             /* 6ff0	Token value */
 inst_t *switchVectors;   /* 6ff2 */
-/* static item_t termTmp; // 6ff4	[4] */
+/* static item_t termTmp; */ /* 6ff4	[4] */
 inst_t *root;            /* 6ff8 */
 int cntOperand;          /* 6ffa	??? used only in sub_39a3 */
 inst_t *word_6ffc;       /* 6ffc */
@@ -362,7 +362,7 @@ char *name_fun;          /* 707c	Function name */
 list_t *freeItemList;    /* 7080 */
 char *allocs;            /* 7082	ok */
 char *programBreak;      /* 7084	ok */
-/* char       * arry_7086[311];	//7086	[622] */
+/* char       * arry_7086[311]; */ /* 7086	[622] */
 /* 72f4 */
 int asdf;
 /****************************************************************
@@ -718,7 +718,7 @@ int get_line();                      /*  5 sub_0758 ok+ */
 void clr_len_inbuf();                /*  6 sub_07aa ok++ */
 int main(int, char **);              /*  7 sub_07b1 ok+ */
 #if defined(__STDC__) || defined(__STDC_VERSION__)
-void _Noreturn pr_error(char const *fmt, ...);
+void pr_error(char const *fmt, ...);
 void pr_warning(char const *fmt, ...);
 void pr_message(char const *fmt, va_list args);
 #else
@@ -972,7 +972,10 @@ int get_token() {
                 charsLeft = 0;
                 continue;
             }
+            goto handle_generic_char;
+
         default:
+        handle_generic_char:
             *pc++ = c;                    /* m50: */
             if (ISALPHA(c)) {             /* goto m46; */
                 while (ISALNUM(PEEKCH())) /* m41: */
@@ -1330,7 +1333,8 @@ inst_t *syntheticLabel(register inst_t *ilist) {
 Apart from bug fix change, the code is the same
 **************************************************************************/
 void optimise() {
-    // int l1;
+    unsigned long l1; /* Declare l1 here */
+    /* int l1; */
     int l2;
     int iteration;
     char *l4;
@@ -1381,7 +1385,7 @@ void optimise() {
     /* fclose(stdout); This statement removed as fclose(stdout) is also done in main */
     fprintf(stderr, "%dK, %d iterations\n", ((int)(l6 - l4) + 0x3ff) / 0x400, iteration);
 
-    for (unsigned long l1 = 0; l1 < NOPTIM; l1++)
+    for (l1 = 0; l1 < NOPTIM; l1++)
         if (optimiseCounters[l1] != 0)
             fprintf(stderr, "%d %s\n", optimiseCounters[l1], opt_msg[l1]);
 }
@@ -1638,8 +1642,8 @@ void sub_15ad() {
                     gPi->pNext->aux = ccSwap[gPi->aux]; /* swap condition code */
                     removeInstruction(gPi);
                     logOptimise(O_SKIP_OVER_JMP); /* 6fcb opt_msg[7] = "Skips over jumps" */
-                } else if (sub_1c67() || !sub_1d94())
-                    ;
+                } else if (sub_1c67() || !sub_1d94()) { ;
+                }
             }
         }
     }
@@ -2104,7 +2108,7 @@ bool sub_29c3() {
         if ((l1 = sub_46b1(gPi->iRhs, gPi->iLhs->aux)) != -1) {
             /* code hikes gPi->iLhs->aux before test !!! */
             regValues[gPi->iLhs->aux] = *gPi->iRhs;
-            // gPi                       = gPi;
+            /* gPi                       = gPi; */
             gPi->iRhs->tType          = T_REG;
             gPi->iRhs->aux            = l1;
             if (gPi->iLhs->aux >= REG_BC) { /* goto m5; */
@@ -2359,6 +2363,7 @@ int num_psect(char const *fmt) {
             return l1;
     }
     pr_error("Unknown psect");
+    return -1;
 }
 
 /**************************************************************************
@@ -2807,16 +2812,23 @@ void loadFunction() {
 
             case T_DEFW:
             case T_DEFB:
-                if (psect == TEXT)
+                if (psect == TEXT) {
                     goto case_default;
+                }
+                goto handle_defm_defs_deff; /* Explicit fallthrough to T_DEFM/T_DEFS/T_DEFF logic */
+
             case T_DEFM:
             case T_DEFS:
             case T_DEFF:
-                if (psect == TEXT)
+            handle_defm_defs_deff: /* Label for shared logic between T_DEFW/T_DEFB (when psect != TEXT) and T_DEFM/T_DEFS/T_DEFF */
+                if (psect == TEXT) {
                     pr_error("DEF[BMSF] in text psect");
+                }
                 pr_psect(psect);
-                /* fall through */
+                goto handle_glb_logic; /* Explicit fallthrough to T_GLB logic */
+
             case T_GLB:
+            handle_glb_logic: /* Label for T_GLB logic */
                 printf("%s\t%s\n", yytext, ptr_token());
                 ilist->tType = T_INVALID;
                 break;
@@ -2997,7 +3009,10 @@ void sub_436e(register operand_t const *ilist) {
                 printf("iy");
             fputc('+', stdout);
         }
+        goto handle_common_operand_print; /* Explicit fallthrough to shared print logic */
+
     case T_CONST:
+    handle_common_operand_print: /* Label for shared print logic */
         if (ilist->oPSym) {
             if (ilist->oPSym->label[0])
                 printf("%s", ilist->oPSym->label);
@@ -3013,7 +3028,10 @@ void sub_436e(register operand_t const *ilist) {
         break;
     case T_REGREF:
         fputc('(', stdout);
+        goto handle_reg_print; /* Explicit fallthrough to shared print logic */
+
     case T_REG:
+    handle_reg_print: /* Label for shared print logic */
         printf("%s", regs[ilist->aux]);
         if (ilist->tType == T_REGREF)
             fputc(')', stdout); /* OPTIMISER[1]: misses optimising htis with same fputc above */
@@ -3272,8 +3290,10 @@ bool sub_47e0(int reg, register inst_t const *pi1, inst_t const *pi2) {
         case T_SHIFT:
             if ((pi1->aux & 0xFFE7) != 0x20 && (msk & 0x40))
                 return true;
+            goto handle_incdec_logic; /* Explicit fallthrough to shared logic */
 
         case T_INCDEC: /* 0x4 "dec", "inc" */
+        handle_incdec_logic: /* Label for shared logic */
             if ((msk & 0x40) && (pi1->iLhs->tType != T_REG || pi1->iLhs->aux < REG_BC))
                 return false;
             if (pi1->iLhs->tType == T_REG || sub_475c(pi1->iLhs, msk))
@@ -3283,8 +3303,10 @@ bool sub_47e0(int reg, register inst_t const *pi1, inst_t const *pi2) {
         case T_BIT: /* "set", "res", "bit" */
             if (pi1->aux == 0x40 && (msk & 0x40))
                 return false;
+            goto handle_0xf_logic; /* Explicit fallthrough to shared logic */
 
         case T_0xF: /* 0xF */
+        handle_0xf_logic: /* Label for shared logic */
             if (sub_475c(pi1->iRhs, msk) || sub_475c(pi1->iLhs, msk))
                 return true;
             break;
@@ -3321,8 +3343,10 @@ bool sub_47e0(int reg, register inst_t const *pi1, inst_t const *pi2) {
         case T_CADD: /* CADD */
             if (msk & 0x40)
                 return false;
+            goto handle_carr_logic; /* Explicit fallthrough to shared logic */
 
         case T_CARR: /* Add, sub with Carry */
+        handle_carr_logic: /* Label for shared logic */
             if ((regTestMasks[pi1->iLhs->aux] | 0x40) & msk)
                 return true;
             if (sub_475c(pi1->iRhs, msk))

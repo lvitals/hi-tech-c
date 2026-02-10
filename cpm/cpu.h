@@ -1398,8 +1398,8 @@ void Z80debug(void) {
 			break;
 		case 'T':
 			loop = FALSE;
-			Step = pos + 3; // This only works correctly with CALL
-							// If the called function messes with the stack, this will fail as well.
+			Step = pos + 3; /* This only works correctly with CALL */
+							/* If the called function messes with the stack, this will fail as well. */
 			Debug = 0;
 			break;
 		case 'W':
@@ -2036,14 +2036,14 @@ void Z80run(void) {
 
 		case 0x76:      /* HALT */
 #ifdef DEBUG
-			_puts("\r\n::CPU HALTED::");	// A halt is a good indicator of broken code
+			_puts("\r\n::CPU HALTED::");	/* A halt is a good indicator of broken code */
 			_puts("Press any key...");
 			_getch();
 #endif
 			--PC;
                         StopCode=STOP_HALT;
 			goto end_decode;
-//			break;
+/*			break;*/
 
 		case 0x77:      /* LD (HL),A */
 			PUT_BYTE(HL, HIGH_REGISTER(AF));
@@ -3949,7 +3949,7 @@ void Z80run(void) {
                         case 0xed:      /* special emulator opcode for BDOS/BIOS call */
                                 StopCode=STOP_NORMAL;
 	        		goto end_decode;
-//                                break;
+						/* break;*/
 			default:    /* ignore ED and following byte */
 				break;
 			}

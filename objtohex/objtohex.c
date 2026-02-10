@@ -142,7 +142,7 @@ int main(int argc, char **argv)
     int16_t blkIdx;
     long remaining;
     uint16_t cnt;
-    uint16_t crc = 0; // avoid compiler warning
+    uint16_t crc = 0; /* avoid compiler warning */
     long curAddr;
     char *wrMode;
     progname = "objto";
@@ -893,8 +893,11 @@ void doSym()
             {
             default:
                 fprintf(stderr, "Unexpected *pname '%c' %s line %d\n", *pname, __FILE__, __LINE__);
+                goto handle_underscore_case; /* Explicit fallthrough to shared logic */
+
             case '_':
             case 't':
+            handle_underscore_case: /* Label for shared logic */
                 var23 = 0xa200;
                 break;
             case 'd':

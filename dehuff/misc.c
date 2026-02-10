@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-//#if	!unix
+/* #if	!unix */
 #if CPM
 /* this is a kludge for a bug in the Venix cpp */
 #endif	/* CPM */

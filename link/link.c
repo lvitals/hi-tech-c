@@ -20,7 +20,7 @@ static char isLibrary(char *fname);
 static void (*recHandler[][2])() = {
     /* 6c3e */
     {NULL, NULL},                             /* 6c3e 0 ""	  */
-    {(void (*)())textRecPass1, textRecPass2}, /* 6c42 1 "TEXT"   */
+    {(void(*)(void))textRecPass1, (void(*)(void))textRecPass2}, /* 6c42 1 "TEXT"   */
     {psectRecPass1, skipRecData},             /* 6c46 2 "PSECT"  */
     {relocRecPass1, relocRecPass2},           /* 6c4a 3 "RELOC"  */
     {symRecPass1, symRecPass2},               /* 6c4e 4 "SYM"	  */

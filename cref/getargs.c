@@ -49,6 +49,10 @@
 #else
 #include <dirent.h>
 #include <unistd.h>
+
+extern int isatty(int);
+extern int fileno(FILE *);
+
 #include <limits.h>
 #endif
 

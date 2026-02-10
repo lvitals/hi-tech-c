@@ -493,7 +493,7 @@ STATIC char *cotoken(register char *p) {
                     if (*p++ == '/')          /* A new style comment */
                         cppcom++;
                     if (defining || !passcom) {
-// GCC moans about indexing with -1, but perfectly valid here
+/* GCC moans about indexing with -1, but perfectly valid here */
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wchar-subscripts"
@@ -1761,11 +1761,10 @@ int main(int argc, char *argv[]) {
 #ifndef CPM
     char *sysdir = NULL;
 #endif
-    // if (argc == 1) {
-    //     argv = _getargs(NULL, "cpp");
-    //     argc = _argc_;
-    // }
-
+    /* if (argc == 1) {
+        argv = _getargs(NULL, "cpp");
+        argc = _argc_;
+    } */
     #ifdef USE_GETARGS
     if (argc == 0)
     {

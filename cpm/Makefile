@@ -1,7 +1,7 @@
 OBJEXT = .o
 BINEXT =
 CC = gcc
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -std=c89
 
 cpm: cpm$(OBJEXT)
 	$(CC) $(LIBS) cpm$(OBJEXT) -o cpm$(BINEXT)

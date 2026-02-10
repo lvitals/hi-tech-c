@@ -1162,10 +1162,10 @@ char *getToken()
         }
         else if (expectName)
         {
-// GCC moans about truncating the string, which is what we actually want
+/* GCC moans about truncating the string, which is what we actually want */
 #ifdef __GNUC__
 #pragma GCC diagnostic push
-// #pragma GCC diagnostic ignored "-Wstringop-truncation"
+/* #pragma GCC diagnostic ignored "-Wstringop-truncation" */
 #endif
             strncpy(progname, buffer, sizeof(progname) - 1);
             progname[sizeof(progname) - 1] = '\0';
@@ -1445,7 +1445,7 @@ int sub_808(register member_t *sb, node_t *p2a)
     member_t *l3b;
     member_t *l4b;
     int l5;
-    node_t *l6a FORCEINIT; //
+    node_t *l6a FORCEINIT; /* */
 
     l1 = 0;
     if (p2a->a_c0 == COLON_U)
@@ -2973,19 +2973,19 @@ uint8_t sub_46F7(long);
  *.......................................................*/
 void sub_2D09(register node_t *sa, char *p2, char p3)
 {
-    struct codeFrag_t *lz1 FORCEINIT; // avoid uninitialised warning
-    node_t *la2 FORCEINIT;            // avoid uninitialised warning
-    char *li3 FORCEINIT;              // avoid uninitialised warning
+    struct codeFrag_t *lz1 FORCEINIT; /* avoid uninitialised warning */
+    node_t *la2 FORCEINIT;            /* avoid uninitialised warning */
+    char *li3 FORCEINIT;              /* avoid uninitialised warning */
     uint8_t lc4;
-    char lc5 = 0; // avoid uninitialised warning
+    char lc5 = 0; /* avoid uninitialised warning */
     char lc6;
     char lc7;
     int ch;
     long ll9;
-    uint8_t lc10 = 0; // avoid uninitialised warning
+    uint8_t lc10 = 0; /* avoid uninitialised warning */
     char lc11;
     char *li12;
-    uint32_t ll13 = 0; // avoid uninitalised warning
+    uint32_t ll13 = 0; /* avoid uninitalised warning */
     bool lc14;
 
     li12 = p2;
@@ -4868,11 +4868,11 @@ node_t *sub_5F52(register node_t *sa)
 node_t *sub_600E(register node_t *sa)
 {
 
-    // int l1; /* Not used */
+    /* int l1; Not used */
 
     warningMsg = 0;
     sa = sub_5DF6(sa);
-    // l1    = 0; /* Not used */
+    /* l1    = 0; Not used */
     do
     {
         byte_B013 = false;

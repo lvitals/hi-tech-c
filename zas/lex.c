@@ -53,14 +53,8 @@ static void setTitle(char *text);                     /* 52 2970 +-- */
 #define PeekCh() (lineLen > 0 ? *inPtr : 0)
 #define GetCh() (--lineLen >= 0 ? *inPtr++ : getText())
 #else
-static inline int16_t PeekCh()
-{
-    return lineLen > 0 ? *inPtr : 0;
-};
-static int16_t GetCh()
-{
-    return --lineLen < 0 ? getText() : *inPtr++;
-}
+#define PeekCh() (lineLen > 0 ? *inPtr : 0)
+#define GetCh() (--lineLen >= 0 ? *inPtr++ : getText())
 #endif
 
 /**************************************************************************

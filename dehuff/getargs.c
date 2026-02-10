@@ -43,6 +43,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+extern int fileno(FILE *);
+extern int isatty(int);
+
 #ifdef _MSC_VER
 #include "missing/dirent.h"
 #include <conio.h>

@@ -70,12 +70,12 @@ const char *_Ldata;
 const char *_Hbss;
 
 void initMemAddr(void) {
-    HANDLE hModule = GetModuleHandle(NULL); // module handle
+    HANDLE hModule = GetModuleHandle(NULL); /* module handle */
 
-    // get the location of the module's IMAGE_NT_HEADERS structure
+    /* get the location of the module's IMAGE_NT_HEADERS structure */
     IMAGE_NT_HEADERS *pNtHdr = ImageNtHeader(hModule);
 
-    // section table immediately follows the IMAGE_NT_HEADERS
+    /* section table immediately follows the IMAGE_NT_HEADERS */
     IMAGE_SECTION_HEADER *pSectionHdr = (IMAGE_SECTION_HEADER *)(pNtHdr + 1);
 
     const char *imageBase             = (const char *)hModule;

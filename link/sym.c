@@ -186,8 +186,8 @@ void symRecPass2()
         {
             if (!(flag & SF_GLOBAL))
             {
-                // No original code, this case does nothing.
-                continue; // Skip to the next iteration
+                /* No original code, this case does nothing. */
+                continue; /* Skip to the next iteration */
             }
         }
         else if (loFlag == SF_LINENO)
@@ -204,7 +204,7 @@ void symRecPass2()
         else if (loFlag == SF_STACK || loFlag == SF_REGNAM || loFlag == SF_FILNAM)
         {
             if (optX || (optZ && isLocalName(symName)))
-                continue; // Skip to the next iteration
+                continue; /* Skip to the next iteration */
 
             if (symFileName)
                 prSymbol(symName, val, loFlag, psectSym);
@@ -218,7 +218,7 @@ void symRecPass2()
         }
         else if (loFlag == SF_COMM || loFlag == SF_EXTERN)
         {
-            // These cases originally did nothing in the switch statement.
+            /* These cases originally did nothing in the switch statement. */
         }
     }
 }
@@ -259,7 +259,7 @@ void symRecPass1()
         else if (loflag == SF_NULL)
         {
             if (!(flag & SF_GLOBAL)) /* skip local define names */
-                continue;            // continue to the next iteration of the loop
+                continue;            /* continue to the next iteration of the loop */
             defineSym(symName, psectSym, val, flag);
         }
         else if (loflag == SF_COMM)

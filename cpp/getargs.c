@@ -7,6 +7,9 @@
 #include <string.h>
 #include <unistd.h>
 
+extern int isatty(int);
+extern int fileno(FILE *);
+
 #ifndef _MAX_PATH
 #ifdef PATH_MAX
 #define _MAX_PATH PATH_MAX

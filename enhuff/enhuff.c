@@ -11,7 +11,7 @@ static	long	totchrs;
 static	long	totsize;
 
 static	hdr		hd;
-//extern	long	ftell();
+/* extern	long	ftell(); */
 extern  void	error(char *fmt, ...);
 extern  void	make_tree(char **);
 void putnames(void);
@@ -127,6 +127,7 @@ int main(int argc, char **argv) {
     pc = (totchrs-totsize)*100;
     pc /= totchrs;
     fprintf(stderr, "Source bytes %ld, enhuff'ed bytes %ld, compression %d%%\n", totchrs, totsize, (int)pc);
+    return 0;
 }
 
 /*

@@ -28,12 +28,12 @@ void prtree(register node *np);
 #define USE_GETARGS 1
 #endif
 
-// #if  !unix
-#if USE_GETARGS           //--+ #if CPM
-#define USE_GETARGS 1     //  |
-extern char **_getargs(); //  |
-extern int _argc_;        //  |
-#endif /* CPM */          //--+
+/* #if  !unix */
+#if USE_GETARGS           /* --+ #if CPM */
+#define USE_GETARGS 1     /*   |         */
+extern char **_getargs(); /*   |         */
+extern int _argc_;        /*   |         */
+#endif /* CPM */          /* --+         */
 /*
  *
  */
@@ -41,13 +41,13 @@ int main(int argc, char **argv) {
     short i;
      --argc, ++argv;
 
-// #if !unix
-#ifdef USE_GETARGS                       //--+ #if CPM
-    if (argc == 1) {                     //  |
-        argv = _getargs(NULL, "dehuff"); //  |
-        argc = _argc_;                   //  |
-    }                                    //  |
-#endif /* CPM */                         //--+
+/* #if !unix */
+#ifdef USE_GETARGS                       /* --+ #if CPM */
+    if (argc == 1) {                     /*   |          */
+        argv = _getargs(NULL, "dehuff"); /*   |          */
+        argc = _argc_;                   /*   |          */
+    }                                    /*   |          */
+#endif /* CPM */                         /* --+          */
 
     while (argc && **argv == '-') {
         switch (argv[0][1]) {
@@ -107,6 +107,7 @@ int main(int argc, char **argv) {
             else
                 list(i);
         }
+    return 0;
 }
 
 /*

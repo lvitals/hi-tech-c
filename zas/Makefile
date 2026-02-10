@@ -3,7 +3,7 @@ SRCS = cclass.c code.c expr.c fname.c kwd.c lex.c macro.c parse.c sym.c tlab.c z
 HEADERS = cclass.h kwd.h zas.h
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -std=c89
 
 OBJS = $(SRCS:.c=.o)
 

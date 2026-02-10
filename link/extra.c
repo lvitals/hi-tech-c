@@ -52,12 +52,12 @@ static void initLibdir()
     }
     else
         strcpy(libdir, "." DIRSEPCH);
-    fpath = strchr(libdir, '\0'); // append point for filenames
+    fpath = strchr(libdir, '\0'); /* append point for filenames */
 }
 
 char const *mkLibPath(char const *s)
 {
-    if (strpbrk(s, DIRSEP)) // only apply lib to simple files
+    if (strpbrk(s, DIRSEP)) /* only apply lib to simple files */
         return s;
     if (!fpath)
         initLibdir();

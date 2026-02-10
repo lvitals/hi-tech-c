@@ -2,7 +2,7 @@ TARGET = objtohex
 SRCS = objtohex.c
 
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -std=c89
 
 OBJS = $(SRCS:.c=.o)
 

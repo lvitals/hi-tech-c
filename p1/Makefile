@@ -3,7 +3,7 @@ SRCS = cclass.c emit.c expr.c lex.c p1.c memchk.c op.c program.c stmt.c sym.c ty
 OBJS = $(SRCS:.c=.o)
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -std=c89
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^

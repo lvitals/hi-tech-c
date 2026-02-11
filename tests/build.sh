@@ -6,7 +6,7 @@
 
 # Step 1: Preprocess the source file
 echo "Step 1: Preprocess the source file"
-../cpp/cpp -Dcpm -Dhi_tech_c -Dz80 -I ../share/include/ -I ../share/lib/  test.c test1.tmp || {
+../cpp/cpp -Dcpm -Dhi_tech_c -Dz80 -I ../share/include/ -L ../share/lib/  test.c test1.tmp || {
     echo "Preprocessing failed!"
     exit 1
 }

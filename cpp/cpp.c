@@ -1861,18 +1861,6 @@ int main(int argc, char *argv[]) {
                 }
             }
             break;
-        case 'L': /* Silently ignore -L flag and its argument */
-        case 'l': /* Silently ignore -l flag and its argument */
-            if (argv[i][2]) { /* -L/path/to/lib or -lname */
-                /* Ignore argument, simply consume the flag */
-            } else { /* -L /path/to/lib or -l name */
-                if (++i >= argc) {
-                    pperror("missing argument for -%c option", toupper(argv[i-1][1]));
-                    exit(1);
-                }
-                /* Ignore argument, simply consume the flag and its value */
-            }
-            break;
 #ifndef SMALL
         case 'H': /* Print included filenames */
             hflag++;
@@ -1909,9 +1897,18 @@ int main(int argc, char *argv[]) {
             break;
         unknown:
 #endif
+        case 'L': /* Silently ignore -L flag and its argument */
+        case 'l': /* Silently ignore -l flag and its argument */
+            if (!argv[i][2]) { /* If argument is separate, consume it */
+                if (++i >= argc) {
+                    pperror("missing argument for -%c option", toupper(argv[i-1][1]));
+                    exit(1);
+                }
+            }
+            break;
         default:
             pperror("unknown flag %s", argv[i]);
-            break;
+            exit(1); /* Exit on unknown flag */
         }
     }
 

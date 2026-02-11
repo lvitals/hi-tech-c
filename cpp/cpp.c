@@ -1899,7 +1899,6 @@ int main(int argc, char *argv[]) {
     return (exfail);
 }
 
-#ifndef SMALL
 LOCAL void newsbf(void) {
     if ((sbf = malloc(SBSIZE)) == NULL) {
         pperror("no buffer space");
@@ -1943,4 +1942,3 @@ LOCAL void usage(void) {
     fprintf(stderr, "    --version   Show cpp version information.\n");
     exit(0);
 }
-#endif

@@ -1,6 +1,14 @@
+#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
+
+/* Apenas para HI-TECH C, ignorado pelo GCC */
+#ifdef z80
+extern size_t strlen(char *);
+extern char *strchr(char *, int);
+#endif
 
 #ifdef z80
 #define bool char
@@ -10,9 +18,6 @@
 #include "dirent.h"
 #include <stdbool.h>
 #endif
-
-#include <stdio.h>
-#include <string.h>
 
 extern int isatty(int);
 
@@ -28,10 +33,10 @@ extern int isatty(int);
 
 char *fname(char *name);
 
-#define MAXARGS 512      /* max number of arguments */
-#define MAXLEN _MAX_PATH /* max length of an argument */
-#define QUOTE -128       /* quoted bit in args */
-#define CHUNK 256        /* line input buffer auto expansion value */
+#define MAXARGS 512
+#define MAXLEN _MAX_PATH
+#define QUOTE -128
+#define CHUNK 256
 #define isterminator(c) ((c) == 0)
 #define look() (*str)
 
@@ -49,11 +54,24 @@ static void error(char *, ...);
 static void *alloc(size_t n);
 #endif
 static char nxtch(void);
-static bool iswild(char c);
-static bool isseparator(char c);
+static char iswild(char c);
+static char isseparator(char c);
 
-bool match(char *regexp, char *text);
-bool matchstar(char *regexp, char *text);
+char match(char *regexp, char *text);
+char matchstar(char *regexp, char *text);
+
+/* Função auxiliar para verificar wildcards - elimina chamadas strchr */
+static char has_wildcard(char *s)
+{
+    char *p = s;
+    while (*p)
+    {
+        if (*p == '*' || *p == '?')
+            return 1;
+        p++;
+    }
+    return 0;
+}
 
 char **_getargs(char *_str, char *_name)
 {
@@ -64,13 +82,13 @@ char **_getargs(char *_str, char *_name)
     char c, quote;
     char *argbuf[MAXARGS + 1];
     char buf[MAXLEN];
-    bool hasWild;
 
     bp = NULL;
     bpSize = 0;
     quote = 0;
     name = _name;
     str = _str;
+    
     if ((interactive = (str == NULL) ? 1 : 0))
         str = "\\";
     else
@@ -82,27 +100,26 @@ char **_getargs(char *_str, char *_name)
             ;
         cp[1] = '\0';
     }
+    
     argbuf[0] = name;
     argc = 1;
-
-    /* first step - process arguments and do globbing */
 
     while (look())
     {
         if (argc >= MAXARGS)
             error("too many arguments", 0);
+            
         while (isseparator(c = nxtch()))
             continue;
         if (c == '\0')
             break;
+            
         ap = buf;
 
         if (c == '\'' || c == '"')
             quote = c;
         else
             *ap++ = c;
-
-        hasWild = iswild(c);
 
         while ((c = nxtch()) && (quote || !isseparator(c)))
         {
@@ -114,14 +131,14 @@ char **_getargs(char *_str, char *_name)
                 quote = c;
             else
             {
-                if (!quote && iswild(c))
-                    hasWild = true;
                 *ap++ = c;
             }
         }
 
         *ap = '\0';
-        if (hasWild)
+
+        /* Verifica wildcards usando função auxiliar */
+        if (iswild(buf[0]) || has_wildcard(buf))
         {
 #ifdef z80
 #ifndef CPM
@@ -206,7 +223,6 @@ char **_getargs(char *_str, char *_name)
     return argv;
 }
 
-/* modified to allow arbitary line length */
 static char nxtch(void)
 {
     int cnt = 0;
@@ -273,24 +289,20 @@ static void *alloc(size_t n)
 }
 #endif
 
-/* check for wild card in file name
-   wildcard in path is not supported
-*/
-static bool iswild(char c)
+static char iswild(char c)
 {
     return c == '*' || c == '?';
 }
 
-static bool isseparator(char c)
+static char isseparator(char c)
 {
     return c == ' ' || c == '\t' || c == '\n';
 }
 
-/* match: search for glob match */
-bool match(char *regexp, char *text)
+char match(char *regexp, char *text)
 {
     if (regexp == NULL || text == NULL)
-        return false;
+        return 0;
     if (*regexp == '\0')
         return *text == '\0';
     if (*regexp == '*')
@@ -298,16 +310,15 @@ bool match(char *regexp, char *text)
 
     if (*text != '\0' && (mapcase(*regexp) == mapcase(*text) || *regexp == '?'))
         return match(regexp + 1, text + 1);
-    return false;
+    return 0;
 }
 
-/* matchstar: */
-bool matchstar(char *regexp, char *text)
+char matchstar(char *regexp, char *text)
 {
     do
-    { /* a * matches zero or more instances */
+    {
         if (match(regexp, text))
-            return true;
+            return 1;
     } while (*text++ != '\0');
-    return false;
+    return 0;
 }

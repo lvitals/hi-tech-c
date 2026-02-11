@@ -10,7 +10,7 @@ HOST_LINK = ../link/link
 HOST_CPM = ../cpm/cpm
 
 # Source files for cpp (these are compiled for Z80 CP/M)
-CPPC_SRCS = cpp.c cpy.c fname.c getargs.c
+CPPC_SRCS = cpp.c cpy.c fname.c getargs.c fgets.c
 CPPC_OBJS = $(CPPC_SRCS:.c=.obj)
 
 # Shared include and library paths
@@ -30,7 +30,7 @@ all: $(TARGET)
 
 $(TARGET): $(CPPC_OBJS)
 	@echo "Step: Linking $(TARGET)"
-	$(HOST_LINK) -z -ptext=0,data,bss -c100h -oo$@ $(CRTCPM_OBJ) $(CPPC_OBJS) $(LIBC_LIB) $(LIBF_LIB)
+	$(HOST_LINK) -z -ptext=0,data,bss -c100h -o$@ $(CRTCPM_OBJ) $(CPPC_OBJS) $(LIBC_LIB) $(LIBF_LIB)
 
 %.obj: %.c
 	@echo "Step: Compiling $< for Z80"
@@ -40,14 +40,21 @@ $(TARGET): $(CPPC_OBJS)
 	$(HOST_OPTIM) $*.tmp.s.unopt $*.s
 	$(HOST_ZAS) -n -o$@ $*.s
 
+fgets.obj: fgets.c
+	@echo "Step: Compiling fgets.c for Z80"
+	$(HOST_CPP) -Dcpm -Dhi_tech_c -Dz80 -I $(SHARE_INCLUDE) fgets.c fgets.i
+	$(HOST_P1) fgets.i fgets.tmp.p1
+	$(HOST_CGEN) fgets.tmp.p1 fgets.tmp.s.unopt
+	$(HOST_OPTIM) fgets.tmp.s.unopt fgets.s
+	$(HOST_ZAS) -n -ofgets.obj fgets.s
+
 test: $(TARGET)
 	@echo "Step: Testing $(TARGET) on CP/M"
 	echo '#include <stdio.h>\nint main() { printf("Test CPP\\n"); return 0; }' > test_input.c
 	$(HOST_CPM) $(TARGET) test_input.c > test_output.i
 	@echo "Generated test_output.i using cpp.com"
 	@echo "Checking output..."
-	grep "Test CPP" test_output.i > /dev/null 2>&1
-	@echo "Test successful: 'Test CPP' found in preprocessed output."
+	grep "Test CPP" test_output.i > /dev/null 2>&1 && echo "Test successful: 'Test CPP' found in preprocessed output." || echo "Test failed: 'Test CPP' not found."
 
 clean:
 	rm -f $(CPPC_OBJS) $(TARGET)

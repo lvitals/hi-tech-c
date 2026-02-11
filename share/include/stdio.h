@@ -1,10 +1,13 @@
-#if z80
+#ifndef _STDIO_H
+#define _STDIO_H
+
+#ifdef z80
 #define BUFSIZ 512
 #define _NFILE 8
-#else z80
+#else
 #define BUFSIZ 1024
 #define _NFILE 20
-#endif z80
+#endif
 
 #ifndef FILE
 #define uchar unsigned char
@@ -17,8 +20,7 @@ extern struct _iobuf
 	uchar _flag;
 	char _file;
 } _iob[_NFILE];
-
-#endif FILE
+#endif
 
 #define _IOREAD 01
 #define _IOWRT 02
@@ -32,7 +34,7 @@ extern struct _iobuf
 
 #ifndef NULL
 #define NULL ((void *)0)
-#endif NULL
+#endif
 
 #define FILE struct _iobuf
 #define EOF (-1)
@@ -43,18 +45,13 @@ extern struct _iobuf
 #define getchar() getc(stdin)
 #define putchar(x) putc(x, stdout)
 
-/*	getc() and putc() must be functions for CP/M to allow the special
- *	handling of '\r', '\n' and '\032'. The same for MSDOS except that
- *	it at least knows the length of a file.
- */
-
-#if UNIX
+#ifdef UNIX
 #define getc(p) (--(p)->_cnt >= 0 ? (unsigned)*(p)->_ptr++ : _filbuf(p))
 #define putc(x, p) (--(p)->_cnt >= 0 ? ((unsigned)(*(p)->_ptr++ = x)) : _flsbuf((unsigned)(x), p))
-#else UNIX
+#else
 #define getc(p) fgetc(p)
 #define putc(x, p) fputc(x, p)
-#endif UNIX
+#endif
 
 #define feof(p) (((p)->_flag & _IOEOF) != 0)
 #define ferror(p) (((p)->_flag & _IOERR) != 0)
@@ -62,7 +59,7 @@ extern struct _iobuf
 #define clrerr(p) p->_flag &= ~_IOERR
 #define clreof(p) p->_flag &= ~_IOEOF
 
-#define L_tmpnam 34 /* max length of temporary names */
+#define L_tmpnam 34
 
 extern int fclose(FILE *);
 extern int fflush(FILE *);
@@ -92,3 +89,5 @@ extern FILE *fdopen(int, char *);
 extern long ftell(FILE *);
 extern char *fgets(char *, int, FILE *);
 extern char *_bufallo(void);
+
+#endif

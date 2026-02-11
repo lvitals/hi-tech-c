@@ -1,0 +1,55 @@
+# Makefile.z80 for building cpp.com for Z80 CP/M
+
+# Paths to host tools
+HOST_CPP = ../cpp/cpp
+HOST_P1 = ../p1/p1
+HOST_CGEN = ../cgen/cgen
+HOST_OPTIM = ../optim/optim
+HOST_ZAS = ../zas/zas
+HOST_LINK = ../link/link
+HOST_CPM = ../cpm/cpm
+
+# Source files for cpp (these are compiled for Z80 CP/M)
+CPPC_SRCS = cpp.c cpy.c fname.c getargs.c
+CPPC_OBJS = $(CPPC_SRCS:.c=.obj)
+
+# Shared include and library paths
+SHARE_INCLUDE = ../share/include
+SHARE_LIB = ../share/lib
+
+# CP/M runtime libraries
+CRTCPM_OBJ = $(SHARE_LIB)/crtcpm.obj
+LIBC_LIB = $(SHARE_LIB)/libc.lib
+LIBF_LIB = $(SHARE_LIB)/libf.lib
+
+TARGET = cpp.com
+
+.PHONY: all clean test
+
+all: $(TARGET)
+
+$(TARGET): $(CPPC_OBJS)
+	@echo "Step: Linking $(TARGET)"
+	$(HOST_LINK) -z -ptext=0,data,bss -c100h -o $@ $(CRTCPM_OBJ) $(CPPC_OBJS) $(LIBC_LIB) $(LIBF_LIB)
+
+%.obj: %.c
+	@echo "Step: Compiling $< for Z80"
+	$(HOST_CPP) -Dcpm -Dhi_tech_c -Dz80 -I $(SHARE_INCLUDE) $< $*.i
+	$(HOST_P1) $*.i $*.tmp.p1
+	$(HOST_CGEN) $*.tmp.p1 $*.tmp.s.unopt
+	$(HOST_OPTIM) $*.tmp.s.unopt $*.s
+	$(HOST_ZAS) -n -o $@ $*.s
+
+test: $(TARGET)
+	@echo "Step: Testing $(TARGET) on CP/M"
+	echo '#include <stdio.h>\nint main() { printf("Test CPP\\n"); return 0; }' > test_input.c
+	$(HOST_CPM) $(TARGET) test_input.c > test_output.i
+	@echo "Generated test_output.i using cpp.com"
+	@echo "Checking output..."
+	grep "Test CPP" test_output.i > /dev/null 2>&1
+	@echo "Test successful: 'Test CPP' found in preprocessed output."
+
+clean:
+	rm -f $(CPPC_OBJS) $(TARGET)
+	rm -f *.i *.tmp.p1 *.tmp.s.unopt *.s
+	rm -f test_input.c test_output.i

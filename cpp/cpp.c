@@ -6,12 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
 #ifdef CPM
 #include <unixio.h>
 #define O_RDONLY 0
 #define USE_GETARGS 1
+#else
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
 #define STATIC static
@@ -1897,15 +1898,6 @@ int main(int argc, char *argv[]) {
             break;
         unknown:
 #endif
-        case 'L': /* Silently ignore -L flag and its argument */
-        case 'l': /* Silently ignore -l flag and its argument */
-            if (!argv[i][2]) { /* If argument is separate, consume it */
-                if (++i >= argc) {
-                    pperror("missing argument for -%c option", toupper(argv[i-1][1]));
-                    exit(1);
-                }
-            }
-            break;
         default:
             pperror("unknown flag %s", argv[i]);
             exit(1); /* Exit on unknown flag */

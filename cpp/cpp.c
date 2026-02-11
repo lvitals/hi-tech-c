@@ -1048,6 +1048,10 @@ LOCAL char *dodef(char *p) {
 
 LOCAL void control(register char *p) {
     register struct symtab *np;
+    register char *s;
+    register int n;
+    register int c;
+    register char *f;
 
     for (;;) {
         fasscan();
@@ -1190,11 +1194,6 @@ LOCAL void control(register char *p) {
                 outptr = inptr = p;
 #ifndef SMALL
                 {
-                    register char *s;
-                    register int n;
-                    register int c;
-                    register char *f;
-
                     s = p;
                     while (*s && *s != '\n')
                         s++;
@@ -1636,14 +1635,13 @@ int main(int argc, char *argv[]) {
     char *sysdir = NULL;
 #endif
 
-    if (USE_GETARGS)
+#ifdef USE_GETARGS
+    if (argc == 0 || argc == 1)
     {
-        if (argc == 0 || argc == 1)
-        {
-            argv = _getargs(NULL, "cpp");
-            argc = _argc_;
-        }
+        argv = _getargs(NULL, "cpp");
+        argc = _argc_;
     }
+#endif
     fin  = stdin;
     fout = stdout;
 

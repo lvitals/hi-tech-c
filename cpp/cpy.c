@@ -218,7 +218,7 @@ yydefault:
             /* there is no state on the stack with an error shift ... abort */
         yyabort:
             return (1);
-            break;
+            /* break; */
 
         case 3: /* no shift yet; clobber input char */
 

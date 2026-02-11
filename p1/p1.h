@@ -32,16 +32,18 @@
 #ifndef _P1_H
 #define _P1_H
 
+#include "tok.h"
 #include "cclass.h"
 #include <stdio.h>
-#include "tok.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __GNUC__
+
+#ifndef CPM
 #include <unistd.h>
 #define _MAX_PATH PATH_MAX
 #endif
+
 #if defined(__STDC__) || defined(__STDC_VERSION__)
 #include <stdbool.h>
 #include <stdint.h>
@@ -75,6 +77,8 @@ typedef long int32_t;
 #define FORCEINIT
 #undef putchar
 int putchar(int ch);
+#define EXIT_FAILURE 1
+char *rindex();
 #else
 #define FORCEINIT    = 0
 /* map some old HiTech functions */
@@ -404,18 +408,18 @@ void initMemAddr(void); /* for now only needed for windows */
 #define initMemAddr()
 #endif
 
-#ifdef CPM
+#if defined(CPM)
 extern char _Hbss;
 #define inData(p) (((char *)p) < &_Hbss)
-#else
-#ifdef __APPLE__
+#endif
+#if !defined(CPM) && defined(__APPLE__)
 #include <malloc/malloc.h>
 #define initMemAddr()
 #define inData(p) (!malloc_zone_from_ptr(p))
-#else
+#endif
+#if !defined(CPM) && !defined(__APPLE__)
 extern const char *_Ldata;
 extern const char *_Hbss;
 #define inData(p) (_Ldata <= ((const char *)p) && ((const char *)p) < _Hbss)
-#endif
 #endif
 #endif

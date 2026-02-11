@@ -39,6 +39,8 @@ p1/*.o
 p1/*.obj
 p1/*.i
 p1/*.s
+p1/*.tmp
+p1/p1.com
 p1/*.tmp.*
 z80as/*.o
 z80as/*.obj

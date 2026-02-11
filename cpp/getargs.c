@@ -1,14 +1,20 @@
-#include "dirent.h"
+#include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
+
+#ifdef z80
+#define bool char
+#define true 1
+#define false 0
+#else
+#include "dirent.h"
 #include <stdbool.h>
+#endif
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 extern int isatty(int);
-extern int fileno(FILE *);
 
 #ifndef _MAX_PATH
 #ifdef PATH_MAX
@@ -29,17 +35,20 @@ char *fname(char *name);
 #define isterminator(c) ((c) == 0)
 #define look() (*str)
 
+#ifdef z80
+extern int _argc_;
+#else
 int _argc_;
+#endif
 
 static char *name, *str, *bp;
-
 static size_t bpSize;
 static char interactive;
-_Noreturn static void error(char *, ...);
+static void error(char *, ...);
 #ifdef CPM
-static void *alloc();
+static void *alloc(size_t n);
 #endif
-static char nxtch();
+static char nxtch(void);
 static bool iswild(char c);
 static bool isseparator(char c);
 
@@ -58,10 +67,11 @@ char **_getargs(char *_str, char *_name)
     bool hasWild;
 
     bp = NULL;
+    bpSize = 0;
     quote = 0;
     name = _name;
     str = _str;
-    if ((interactive = str == NULL))
+    if ((interactive = (str == NULL) ? 1 : 0))
         str = "\\";
     else
     {
@@ -79,7 +89,7 @@ char **_getargs(char *_str, char *_name)
 
     while (look())
     {
-        if (argc == MAXARGS)
+        if (argc >= MAXARGS)
             error("too many arguments", 0);
         while (isseparator(c = nxtch()))
             continue;
@@ -96,7 +106,7 @@ char **_getargs(char *_str, char *_name)
 
         while ((c = nxtch()) && (quote || !isseparator(c)))
         {
-            if (ap == &buf[MAXLEN])
+            if (ap >= &buf[MAXLEN])
                 error("argument too long", 0);
             if (c == quote)
                 quote = 0;
@@ -110,15 +120,32 @@ char **_getargs(char *_str, char *_name)
             }
         }
 
-        *ap = 0;
+        *ap = '\0';
         if (hasWild)
         {
+#ifdef z80
+#ifndef CPM
+            argbuf[argc] = malloc((size_t)(ap - buf + 1));
+            if (argbuf[argc])
+                strcpy(argbuf[argc], buf);
+            argc++;
+#else
+            argbuf[argc] = alloc((size_t)(ap - buf + 1));
+            if (argbuf[argc])
+                strcpy(argbuf[argc], buf);
+            argc++;
+#endif
+#else
             char pattern[_MAX_PATH];
-            ap = fname(buf);
-            strcpy(pattern, ap);
-            *ap = 0;
-
-            DIR *dir = opendir(*buf ? buf : ".");
+            char dirpath[_MAX_PATH];
+            char *p;
+            
+            p = fname(buf);
+            strcpy(pattern, p);
+            *p = '\0';
+            strcpy(dirpath, *buf ? buf : ".");
+            
+            DIR *dir = opendir(dirpath);
             if (dir)
             {
                 struct dirent *entry;
@@ -129,75 +156,87 @@ char **_getargs(char *_str, char *_name)
                         if (match(pattern, entry->d_name))
                         {
 #ifndef CPM
-
-                            argbuf[argc] = malloc(ap - buf + strlen(entry->d_name) + 1);
-
+                            argbuf[argc] = malloc((size_t)(p - buf + strlen(entry->d_name) + 1));
 #else
-
-                            argbuf[argc] = alloc(ap - buf + strlen(entry->d_name) + 1);
-
+                            argbuf[argc] = alloc((size_t)(p - buf + strlen(entry->d_name) + 1));
 #endif
-                            strcpy(argbuf[argc], buf);
-                            strcat(argbuf[argc++], entry->d_name);
+                            if (argbuf[argc])
+                            {
+                                strcpy(argbuf[argc], buf);
+                                strcat(argbuf[argc++], entry->d_name);
+                            }
                         }
                     }
                 }
                 closedir(dir);
             }
             else
-                error(buf, pattern, ": no match", 0);
+            {
+                error(buf, pattern, ": no match", NULL);
+            }
+#endif
         }
         else
         {
-
 #ifndef CPM
-
-            strcpy(argbuf[argc++] = malloc(ap - buf + 1), buf);
-
+            argbuf[argc] = malloc((size_t)(ap - buf + 1));
 #else
-
-            strcpy(argbuf[argc++] = alloc(ap - buf + 1), buf);
-
+            argbuf[argc] = alloc((size_t)(ap - buf + 1));
 #endif
+            if (argbuf[argc])
+            {
+                strcpy(argbuf[argc], buf);
+                argc++;
+            }
         }
     }
 
     _argc_ = argc;
-    argbuf[argc++] = NULL;
+    argbuf[argc] = NULL;
 
 #ifndef CPM
-
-    argv = malloc(argc * sizeof *argv);
-
+    argv = malloc((size_t)(argc + 1) * sizeof(char *));
 #else
-
-    argv = alloc(argc * sizeof *argv);
-
+    argv = alloc((size_t)(argc + 1) * sizeof(char *));
 #endif
 
-    memcpy(argv, argbuf, argc * sizeof *argv);
+    if (argv)
+        memcpy(argv, argbuf, (size_t)(argc + 1) * sizeof(char *));
 
     return argv;
 }
 
 /* modified to allow arbitary line length */
-static char nxtch()
+static char nxtch(void)
 {
-    if (interactive && *str == '\\' && str[1] == 0)
+    int cnt = 0;
+    int c;
+
+    if (interactive && *str == '\\' && str[1] == '\0')
     {
-        if (isatty(fileno(stdin)))
+        if (isatty(0))
             fprintf(stderr, "%s> ", name);
-        size_t cnt = 0;
-        int c;
+        cnt = 0;
+        bpSize = 0;
+        bp = NULL;
+        
         while ((c = getchar()) != '\n' && c != EOF)
         {
-            if (cnt + 1 >= bpSize && (bp = realloc(bp, bpSize += CHUNK)) == NULL)
-                error("no room for arguments", 0);
-            bp[cnt++] = c;
+            if ((size_t)(cnt + 1) >= bpSize)
+            {
+                size_t newSize = bpSize + CHUNK;
+                char *newBp = realloc(bp, newSize);
+                if (newBp == NULL)
+                    error("no room for arguments", NULL);
+                bp = newBp;
+                bpSize = newSize;
+            }
+            if (bp)
+                bp[cnt++] = (char)c;
         }
-        if (bp)
+        if (bp && cnt > 0)
         {
-            bp[cnt] = 0;
+            bp[cnt] = '\0';
             str = bp;
         }
         else
@@ -206,27 +245,31 @@ static char nxtch()
     if (*str)
         return *str++;
 
-    return 0;
+    return '\0';
 }
 
-_Noreturn static void error(char *s, ...)
+static void error(char *s, ...)
 {
     va_list args;
     va_start(args, s);
-    while (s)
+    while (s != NULL)
+    {
         fputs(s, stderr);
+        s = va_arg(args, char *);
+    }
     fputc('\n', stderr);
+    va_end(args);
     exit(-1);
 }
 
 #ifdef CPM
 static void *alloc(size_t n)
 {
-    void *bp;
+    void *p;
 
-    if ((bp = malloc(n)) == NULL)
-        error("no room for arguments", 0);
-    return bp;
+    if ((p = malloc(n)) == NULL)
+        error("no room for arguments", NULL);
+    return p;
 }
 #endif
 
@@ -246,6 +289,8 @@ static bool isseparator(char c)
 /* match: search for glob match */
 bool match(char *regexp, char *text)
 {
+    if (regexp == NULL || text == NULL)
+        return false;
     if (*regexp == '\0')
         return *text == '\0';
     if (*regexp == '*')

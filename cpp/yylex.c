@@ -1,15 +1,16 @@
 #include "cpp.h"
 
 #ifndef lint
-static UConst char sccsid[] = "@(#)yylex.c	1.9 19/08/29 2010-2019 J. Schilling";
+#define UNUSED(x) ((void)(x))
+static char sccsid[] = "@(#)yylex.c	1.9 19/08/29 2010-2019 J. Schilling";
 #endif
 
 #include <string.h>
 
 /*
- * XXX This block should be moved to cpp.h, it is douplicated in cpp.c
+ * These definitions should match those in cpp.c
  */
-#define isid(a) ((fastab + COFF)[(int)a] & IB)
+#define isid(a) ((fastab + COFF)[(int)(a)] & IB)
 #define IB      1
 /*	#if '\377' < 0		it would be nice if this worked properly!!!!! */
 #if pdp11 | vax | '\377' < 0
@@ -18,10 +19,25 @@ static UConst char sccsid[] = "@(#)yylex.c	1.9 19/08/29 2010-2019 J. Schilling";
 #define COFF 0
 #endif
 
+/* Token values - these should be defined in cpp.h */
+#ifndef OROR
+#define OROR 258
+#define ANDAND 259
+#define RS 260
+#define LS 261
+#define GE 262
+#define LE 263
+#define NE 264
+#define EQ 265
+#define stop 266
+#define number 267
+#define DEFINED 268
+#endif
+
 EXPORT int yylex(void);
 LOCAL int tobinary(char *, int);
 
-int yylex() {
+int yylex(void) {
     static int ifdef   = 0;
     static char *op2[] = { "||", "&&", ">>", "<<", ">=", "<=", "!=", "==" };
     static int val2[]  = { OROR, ANDAND, RS, LS, GE, LE, NE, EQ };
@@ -34,27 +50,33 @@ int yylex() {
     register char **p2;
     struct symtab *sp;
 
+#ifndef lint
+    UNUSED(sccsid);  /* Avoid warning about unused static variable */
+#endif
+
     for (;;) {
         newp = skipbl(newp);
         if (*inptr == '\n')
             return (stop); /* end of #if */
         savc  = *newp;
         *newp = '\0';
-        for (p2 = op2 + 8; --p2 >= op2;) /* check 2-char ops */
+        for (p2 = op2 + 8; --p2 >= op2;) { /* check 2-char ops */
             if (0 == strcmp(*p2, inptr)) {
                 val = val2[p2 - op2];
                 goto ret;
             }
+        }
         s = "+-*/%<>&^|?:!~(),"; /* check 1-char ops */
-        while (*s)
+        while (*s) {
             if (*s++ == *inptr) {
                 val = *--s;
                 goto ret;
             }
+        }
         if (*inptr <= '9' && *inptr >= '0') { /* a number */
             if (*inptr == '0')
-                yylval = (inptr[1] == 'x' || inptr[1] == 'X') ? tobinary(inptr + 2, 16)
-                                                              : tobinary(inptr + 1, 8);
+                yylval = (inptr[1] == 'x' || inptr[1] == 'X') ? 
+                         tobinary(inptr + 2, 16) : tobinary(inptr + 1, 8);
             else
                 yylval = tobinary(inptr, 10);
             val = number;
@@ -75,24 +97,27 @@ int yylex() {
         } else if (*inptr == '\'') { /* character constant */
             val = number;
             if (inptr[1] == '\\') { /* escaped */
-                signed char c;
+                char c;
 
                 if (newp[-1] == '\'')
                     newp[-1] = '\0';
                 s = opc;
-                while (*s)
-                    if (*s++ != inptr[2])
+                while (*s) {
+                    if (*s++ != inptr[2]) {
                         ++s;
-                    else {
+                    } else {
                         yylval = *s;
                         goto ret;
                     }
-                if (inptr[2] <= '9' && inptr[2] >= '0')
-                        yylval = c = tobinary(inptr + 2, 8);
-                else
+                }
+                if (inptr[2] <= '9' && inptr[2] >= '0') {
+                    yylval = c = tobinary(inptr + 2, 8);
+                } else {
                     yylval = inptr[2];
-            } else
+                }
+            } else {
                 yylval = inptr[1];
+            }
         } else if (0 == strcmp("\\\n", inptr)) {
             *newp = savc;
             continue;
@@ -134,8 +159,7 @@ LOCAL int tobinary(char *st, int b) {
         case 'e':
         case 'f':
             t = c - 'a' + 10;
-            /* if (b > 10) */
-                break;
+            break;
         case 'A':
         case 'B':
         case 'C':
@@ -143,14 +167,15 @@ LOCAL int tobinary(char *st, int b) {
         case 'E':
         case 'F':
             t = c - 'A' + 10;
-            /* if (b > 10) */
-                break;
+            break;
         default:
             t = -1;
-            if (c == 'l' || c == 'L')
+            if (c == 'l' || c == 'L') {
                 if (*s == '\0')
                     break;
+            }
             pperror("Illegal number %s", st);
+            break;
         }
         if (t < 0)
             break;

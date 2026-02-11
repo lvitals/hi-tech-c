@@ -30,7 +30,7 @@ all: $(TARGET)
 
 $(TARGET): $(CPPC_OBJS)
 	@echo "Step: Linking $(TARGET)"
-	$(HOST_LINK) -z -ptext=0,data,bss -c100h -o $@ $(CRTCPM_OBJ) $(CPPC_OBJS) $(LIBC_LIB) $(LIBF_LIB)
+	$(HOST_LINK) -z -ptext=0,data,bss -c100h -oo$@ $(CRTCPM_OBJ) $(CPPC_OBJS) $(LIBC_LIB) $(LIBF_LIB)
 
 %.obj: %.c
 	@echo "Step: Compiling $< for Z80"
@@ -38,7 +38,7 @@ $(TARGET): $(CPPC_OBJS)
 	$(HOST_P1) $*.i $*.tmp.p1
 	$(HOST_CGEN) $*.tmp.p1 $*.tmp.s.unopt
 	$(HOST_OPTIM) $*.tmp.s.unopt $*.s
-	$(HOST_ZAS) -n -o $@ $*.s
+	$(HOST_ZAS) -n -o$@ $*.s
 
 test: $(TARGET)
 	@echo "Step: Testing $(TARGET) on CP/M"

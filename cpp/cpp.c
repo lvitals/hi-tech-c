@@ -6,16 +6,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef CPM
-#include <unixio.h>
-#define O_RDONLY 0
-#define USE_GETARGS 1
+
+#ifndef USE_GETARGS
+#define USE_GETARGS 0
+#endif
+
+#ifdef z80
+struct _iobuf {
+    char *_ptr;
+    int _cnt;
+    char *_base;
+    unsigned char _flag;
+    char _file;
+};
+typedef struct _iobuf C_FILE;
+extern C_FILE *fopen();
+extern C_FILE *freopen();
+extern int fclose();
+extern int fread();
+extern void *malloc();
+extern void *realloc();
+extern int isatty();
+extern char **_getargs();
+extern C_FILE _iob[];
+#undef stdin
+#define stdin (&_iob[0])
+#undef stdout
+#define stdout (&_iob[1])
+#undef stderr
+#define stderr (&_iob[2])
 #else
-#include <fcntl.h>
-#include <unistd.h>
+typedef FILE C_FILE;
 #endif
 
 #define STATIC static
+#define LOCAL static
 
 #ifdef SMALL
 #define SYMLEN 31
@@ -35,8 +60,13 @@ char *outptr, *inptr;
 char *newp;
 STATIC char cinit;
 
+#ifdef CPM
+#include <unixio.h>
+#define O_RDONLY 0
+#define USE_GETARGS 1
+#endif
+
 /* some code depends on whether characters are sign or zero extended */
-/*	#if '\377' < 0		not used here, old cpp doesn't understand */
 #if pdp11 | vax | '\377' < 0
 #define COFF 128
 #else
@@ -50,14 +80,6 @@ STATIC char toktyp[ALFSIZ];
 #define IDENT 2 /* valid char for identifier names */
 #define NUMBR 3 /* chars is of "0123456789." */
 
-/*
- * a superimposed code is used to reduce the number of calls to the
- * symbol table lookup routine.  (if the kth character of an identifier
- * is 'a' and there are no macro names whose kth character is 'a'
- * then the identifier cannot be a macro name, hence there is no need
- * to look in the symbol table.)  'scw1' enables the test based on
- * single characters and their position in the identifier.
- */
 #define scw1  1
 
 #if scw1
@@ -81,17 +103,13 @@ char fastab[ALFSIZ];
 STATIC char slotab[ALFSIZ];
 STATIC char *ptrtab;
 
-/*
- * Cast the array index to int in order to avoid GCCs warnings:
- * warning: subscript has type `char'
- */
 #define isslo     (ptrtab == (slotab + COFF))
-#define isid(a)   ((fastab + COFF)[(int)a] & IB)
-#define isspc(a)  (ptrtab[(int)a] & SB)
-#define isnum(a)  ((fastab + COFF)[(int)a] & NB)
-#define iscom(a)  ((fastab + COFF)[(int)a] & CB)
-#define isquo(a)  ((fastab + COFF)[(int)a] & QB)
-#define iswarn(a) ((fastab + COFF)[(int)a] & WB)
+#define isid(a)   ((fastab + COFF)[(int)(a)] & IB)
+#define isspc(a)  (ptrtab[(int)(a)] & SB)
+#define isnum(a)  ((fastab + COFF)[(int)(a)] & NB)
+#define iscom(a)  ((fastab + COFF)[(int)(a)] & CB)
+#define isquo(a)  ((fastab + COFF)[(int)(a)] & QB)
+#define iswarn(a) ((fastab + COFF)[(int)(a)] & WB)
 
 #define eob(a)    ((a) >= pend)
 #define bob(a)    (pbeg >= (a))
@@ -103,10 +121,6 @@ STATIC char *ptrtab;
 #endif
 STATIC char buffer[SYMLEN + BUFFERSIZ + BUFFERSIZ + SYMLEN];
 
-/*
- * SBSIZE was static 12000 chars in 1978, we now have a method to
- * malloc more space.
- */
 #ifdef SMALL
 #define SBSIZE 12000
 STATIC char sbf[SBSIZE];
@@ -120,13 +134,13 @@ STATIC char *savch = sbf;
 STATIC char *savch;
 #endif
 
-#define DROP     0xFE /* special character not legal ASCII or EBCDIC */
+#define DROP     0xFE
 #define WARN     DROP
 #define SAME     0
-#define MAXINC   10 /* max include nesting depth */
-#define MAXIDIRS 10 /* max # of -I directories */
-#define MAXFRE   14 /* max buffers of macro pushback */
-#define MAXFRM   31 /* max number of formals/actuals to a macro */
+#define MAXINC   10
+#define MAXIDIRS 10
+#define MAXFRE   14
+#define MAXFRM   31
 
 #define MAXMULT  (INT_MAX / 10)
 #define MAXVAL   (INT_MAX)
@@ -139,52 +153,45 @@ STATIC char *instack[MAXFRE];
 STATIC char *bufstack[MAXFRE];
 STATIC char *endbuf[MAXFRE];
 
-STATIC int plvl;      /* parenthesis level during scan for macro actuals */
-STATIC int maclin;    /* line number of macro call requiring actuals */
-STATIC char *macfil;  /* file name of macro call requiring actuals */
-STATIC char *macnam;  /* name of macro requiring actuals */
-STATIC int maclvl;    /* # calls since last decrease in nesting level */
-STATIC char *macforw; /* pointer which must be exceeded to decrease nesting level */
-STATIC int macdam;    /* offset to macforw due to buffer shifting */
+STATIC int plvl;
+STATIC int maclin;
+STATIC char *macfil;
+STATIC char *macnam;
+STATIC int maclvl;
+STATIC char *macforw;
+STATIC int macdam;
 
 #if tgp
-int tgpscan; /* flag for dump(); */
+int tgpscan;
 #endif
 
 STATIC int inctop[MAXINC];
 STATIC char *fnames[MAXINC];
-STATIC char *dirnams[MAXINC]; /* actual directory of #include files */
-STATIC FILE *fins[MAXINC];
+STATIC char *dirnams[MAXINC];
+STATIC C_FILE *fins[MAXINC];
 STATIC int lineno[MAXINC];
 #ifndef SMALL
 STATIC char *input;
 #endif
 
-/*
- * We need:
- *	"" include dir as dirs[0] +
- *	MAXIDIRS +
- *	system default include dir +
- *	a NULL pointer at the end
- */
-STATIC char *dirs[MAXIDIRS + 3]; /* -I and <> directories */
-STATIC FILE *fin;                /* will be initially set to stdin */
-STATIC FILE *fout;               /* Init in main(), Mac OS is nonPOSIX */
+STATIC char *dirs[MAXIDIRS + 3];
+STATIC C_FILE *fin;
+STATIC C_FILE *fout;
 #ifndef SMALL
-STATIC FILE *mout; /* Output for -M */
+STATIC C_FILE *mout;
 #endif
 STATIC int nd = 1;
-STATIC int pflag;   /* don't put out lines "# 12 foo.c" */
-STATIC int passcom; /* don't delete comments */
-STATIC int rflag;   /* allow macro recursion */
+STATIC int pflag;
+STATIC int passcom;
+STATIC int rflag;
 #ifndef SMALL
-STATIC int hflag; /* Print included filenames */
-STATIC int mflag; /* Generate make dependencies */
+STATIC int hflag;
+STATIC int mflag;
 #endif
 #ifndef CPM
-STATIC int noinclude; /* -noinclude /usr/include */
+STATIC int noinclude;
 #endif
-STATIC int nopredef; /* -U */
+STATIC int nopredef;
 STATIC int ifno;
 #define NPREDEF 20
 STATIC char *prespc[NPREDEF];
@@ -194,7 +201,8 @@ STATIC char **prund = punspc;
 STATIC int exfail;
 STATIC struct symtab *lastsym;
 
-LOCAL void sayline();
+/* Function prototypes - all moved to top */
+LOCAL void sayline(void);
 LOCAL void dump(void);
 LOCAL char *refill(char *);
 LOCAL char *cotoken(char *);
@@ -224,11 +232,11 @@ LOCAL void usage(void);
 #endif
 
 #define symsiz  500
-#define SYMINCR 340 /* Number of symtab entries to allocate as a block */
+#define SYMINCR 340
 #ifdef SMALL
-STATIC struct symtab stab[symsiz]; /* limited size, allocate symbols statically avoids ptr */
+STATIC struct symtab stab[symsiz];
 #else
-STATIC struct symtab *stab[symsiz]; /* newer version allocates lists */
+STATIC struct symtab *stab[symsiz];
 #endif
 
 STATIC struct symtab *defloc;
@@ -247,95 +255,38 @@ STATIC struct symtab *lneloc;
 STATIC struct symtab *ulnloc;
 STATIC struct symtab *easloc;
 STATIC struct symtab *uflloc;
-
 STATIC struct symtab *pragmaloc;
 STATIC struct symtab *errorloc;
+
 STATIC int trulvl;
 int flslvl;
 STATIC int elflvl;
 STATIC int elslvl;
 
+#ifndef z80
 #if !defined(CPM)
 #define fread(ptr, size, count, stream) afread(ptr, count, stream)
-/* simplified as size is always one */
-size_t afread(void *ptr, size_t count, FILE *stream) {
+size_t afread(void *ptr, size_t count, C_FILE *stream) {
     int c   = 0;
     int cnt = 0;
     while ((size_t)cnt < count && (c = getc(stream)) != EOF && c != 0x1a)
         if (c != '\r')
             ((char *)ptr)[cnt++] = c;
-    if (c == 0x1a) /* for next time */
+    if (c == 0x1a)
         ungetc(c, stream);
     return cnt;
 }
 #endif
+#endif
 
-/* ARGSUSED */
-STATIC void sayline() {
+LOCAL void sayline(void) {
     if (pflag == 0)
         fprintf(fout, "# %d \"%s\"\n", lineno[ifno], fnames[ifno]);
 }
 
-/*
- * data structure guide
- *
- * most of the scanning takes place in the buffer:
- *
- *  (low address)                                             (high address)
- *  pbeg                           pbuf                                 pend
- *  |      <-- BUFFERSIZ chars -->   |         <-- BUFFERSIZ chars -->     |
- *  _______________________________________________________________________
- * |_______________________________________________________________________|
- *          |               |               |
- *          |<-- waiting -->|               |<-- waiting -->
- *          |    to be      |<-- current -->|    to be
- *          |    written    |    token      |    scanned
- *          |               |               |
- *          outptr          inptr           p
- *
- *  *outptr   first char not yet written to outptrut file
- *  *inptr    first char of current token
- *  *p      first char not yet scanned
- *
- * macro expansion: write from *outptr to *inptr (chars waiting to be written),
- * ignore from *inptr to *p (chars of the macro call), place generated
- * characters in front of *p (in reverse order), update pointers,
- * resume scanning.
- *
- * symbol table pointers point to just beyond the end of macro definitions;
- * the first preceding character is the number of formal parameters.
- * the appearance of a formal in the body of a definition is marked by
- * 2 chars: the char WARN, and a char containing the parameter number.
- * the first char of a definition is preceded by a zero character.
- *
- * when macro expansion attempts to back up over the beginning of the
- * buffer, some characters preceding *pend are saved in a side buffer,
- * the address of the side buffer is put on 'instack', and the rest
- * of the main buffer is moved to the right.  the end of the saved buffer
- * is kept in 'endbuf' since there may be nulls in the saved buffer.
- *
- * similar action is taken when an 'include' statement is processed,
- * except that the main buffer must be completely emptied.  the array
- * element 'inctop[ifno]' records the last side buffer saved when
- * file 'ifno' was included.  these buffers remain dormant while
- * the file is being read, and are reactivated at end-of-file.
- *
- * instack[0 : mactop] holds the addresses of all pending side buffers.
- * instack[inctop[ifno]+1 : mactop-1] holds the addresses of the side
- * buffers which are "live"; the side buffers instack[0 : inctop[ifno]]
- * are dormant, waiting for end-of-file on the current file.
- *
- * space for side buffers is obtained from 'savch' and is never returned.
- * bufstack[0:fretop-1] holds addresses of side buffers which
- * are available for use.
- */
-
-STATIC void dump() {
-    /*
-     * stripped down version
-     */
+LOCAL void dump(void) {
     register char *p1;
-    register FILE *f;
+    register C_FILE *f;
     if ((p1 = outptr) == inptr || flslvl != 0)
         return;
     f = fout;
@@ -344,11 +295,7 @@ STATIC void dump() {
     outptr = p1;
 }
 
-STATIC char *refill(register char *p) {
-    /*
-     * dump buffer.  save chars from inptr to p.  read into buffer at pbuf,
-     * contiguous with p.  update pointers, return new p.
-     */
+LOCAL char *refill(register char *p) {
     register char *np, *op;
     register int ninbuf;
     dump();
@@ -365,7 +312,7 @@ STATIC char *refill(register char *p) {
         *np++ = *op++;
     p = np;
     for (;;) {
-        if (mactop > inctop[ifno]) { /* retrieve hunk of pushed-back macro text */
+        if (mactop > inctop[ifno]) {
             op = instack[--mactop];
             np = pbuf;
             do {
@@ -373,19 +320,17 @@ STATIC char *refill(register char *p) {
                     ;
             } while (op < endbuf[mactop]);
             pend = np - 1;
-            /* make buffer space avail for 'include' processing */
             if (fretop < MAXFRE)
                 bufstack[fretop++] = instack[mactop];
             return (p);
-        } else { /* get more text from file(s) */
+        } else {
             maclvl = 0;
             if (0 < (ninbuf = (int)fread(pbuf, 1, BUFFERSIZ, fin))) {
                 pend  = pbuf + ninbuf;
                 *pend = '\0';
                 return (p);
             }
-            /* end of #include file */
-            if (ifno == 0) { /* end of input */
+            if (ifno == 0) {
                 if (plvl != 0) {
                     int n = plvl, tlin = lineno[ifno];
                     char *tfil   = fnames[ifno];
@@ -395,9 +340,9 @@ STATIC char *refill(register char *p) {
                     lineno[ifno] = tlin;
                     fnames[ifno] = tfil;
                     np           = p;
-                    *np++        = '\n'; /* shut off unterminated quoted string */
+                    *np++        = '\n';
                     while (--n >= 0)
-                        *np++ = ')'; /* supply missing parens */
+                        *np++ = ')';
                     pend = np;
                     *np  = '\0';
                     if (plvl < 0)
@@ -419,7 +364,7 @@ STATIC char *refill(register char *p) {
 #define BEG 0
 #define LF  1
 
-STATIC char *cotoken(register char *p) {
+LOCAL char *cotoken(register char *p) {
     register int c, i;
     char quoc;
     int cppcom       = 0;
@@ -438,12 +383,12 @@ STATIC char *cotoken(register char *p) {
                     p = refill(p);
                     goto again;
                 } else
-                    ++p; /* ignore null byte */
+                    ++p;
             }
             break;
         case '|':
         case '&':
-            for (;;) { /* sloscan only */
+            for (;;) {
                 if (*p++ == *inptr)
                     break;
                 if (eob(--p))
@@ -454,7 +399,7 @@ STATIC char *cotoken(register char *p) {
             break;
         case '=':
         case '!':
-            for (;;) { /* sloscan only */
+            for (;;) {
                 if (*p++ == '=')
                     break;
                 if (eob(--p))
@@ -465,7 +410,7 @@ STATIC char *cotoken(register char *p) {
             break;
         case '<':
         case '>':
-            for (;;) { /* sloscan only */
+            for (;;) {
                 if (*p++ == '=' || p[-2] == p[-1])
                     break;
                 if (eob(--p))
@@ -490,21 +435,13 @@ STATIC char *cotoken(register char *p) {
             break;
         case '/':
             for (;;) {
-                if (*p == '*' || *p == '/') { /* comment */
-                    if (*p++ == '/')          /* A new style comment */
+                if (*p == '*' || *p == '/') {
+                    if (*p++ == '/')
                         cppcom++;
                     if (defining || !passcom) {
-/* GCC moans about indexing with -1, but perfectly valid here */
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wchar-subscripts"
-#endif
-                        for (inptr = p - 2; (toktyp + COFF)[inptr[-1]] == BLANK && inptr != outptr;
+                        for (inptr = p - 2; (toktyp + COFF)[(int)inptr[-1]] == BLANK && inptr != outptr;
                              inptr--)
                             ;
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
                         dump();
                         ++flslvl;
                     }
@@ -523,11 +460,10 @@ STATIC char *cotoken(register char *p) {
                                     if (defining || !passcom) {
                                         inptr = p;
                                         p     = refill(p);
-                                    } else if ((p - inptr) >= BUFFERSIZ) { /* split long comment */
+                                    } else if ((p - inptr) >= BUFFERSIZ) {
                                         inptr = p;
-                                        p     = refill(p); /* last char written is '*' */
-                                        fputc('/', fout);  /* terminate first part */
-                                        /* and fake start of 2nd */
+                                        p     = refill(p);
+                                        fputc('/', fout);
                                         outptr = inptr = p -= 3;
                                         *p++           = '/';
                                         *p++           = '*';
@@ -545,7 +481,7 @@ STATIC char *cotoken(register char *p) {
                             if (!passcom) {
                                 inptr = p;
                                 p     = refill(p);
-                            } else if ((p - inptr) >= BUFFERSIZ) { /* split long comment */
+                            } else if ((p - inptr) >= BUFFERSIZ) {
                                 inptr = p;
                                 p     = refill(p);
                                 fputc('*', fout);
@@ -556,7 +492,7 @@ STATIC char *cotoken(register char *p) {
                             } else
                                 p = refill(p);
                         } else
-                            ++p; /* ignore null byte */
+                            ++p;
                     }
                 endcom:
                     cppcom = 0;
@@ -566,7 +502,7 @@ STATIC char *cotoken(register char *p) {
                         goto again;
                     }
                     break;
-                } else { /* no comment, skip */
+                } else {
                     p++;
                 }
                 if (eob(--p))
@@ -587,13 +523,13 @@ STATIC char *cotoken(register char *p) {
                     if (p[-1] == '\n') {
                         --p;
                         break;
-                    } /* bare \n terminates quotation */
+                    }
                     if (p[-1] == '\\')
                         for (;;) {
                             if (*p++ == '\n') {
                                 ++lineno[ifno];
                                 break;
-                            } /* escaped \n ignored */
+                            }
                             if (eob(--p))
                                 p = refill(p);
                             else {
@@ -604,7 +540,7 @@ STATIC char *cotoken(register char *p) {
                     else if (eob(--p))
                         p = refill(p);
                     else
-                        ++p; /* it was a different quote character */
+                        ++p;
                 }
             }
             break;
@@ -626,7 +562,6 @@ STATIC char *cotoken(register char *p) {
                         goto again;
                 }
             }
-            /* NOTREACHED */
         case '0':
         case '1':
         case '2':
@@ -646,64 +581,20 @@ STATIC char *cotoken(register char *p) {
                     break;
             }
             break;
-        case 'A':
-        case 'B':
-        case 'C':
-        case 'D':
-        case 'E':
-        case 'F':
-        case 'G':
-        case 'H':
-        case 'I':
-        case 'J':
-        case 'K':
-        case 'L':
-        case 'M':
-        case 'N':
-        case 'O':
-        case 'P':
-        case 'Q':
-        case 'R':
-        case 'S':
-        case 'T':
-        case 'U':
-        case 'V':
-        case 'W':
-        case 'X':
-        case 'Y':
-        case 'Z':
-        case '_':
-        case 'a':
-        case 'b':
-        case 'c':
-        case 'd':
-        case 'e':
-        case 'f':
-        case 'g':
-        case 'h':
-        case 'i':
-        case 'j':
-        case 'k':
-        case 'l':
-        case 'm':
-        case 'n':
-        case 'o':
-        case 'p':
-        case 'q':
-        case 'r':
-        case 's':
-        case 't':
-        case 'u':
-        case 'v':
-        case 'w':
-        case 'x':
-        case 'y':
-        case 'z':
-
+        case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+        case 'G': case 'H': case 'I': case 'J': case 'K': case 'L':
+        case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
+        case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
+        case 'Y': case 'Z': case '_':
+        case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+        case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
+        case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
+        case 's': case 't': case 'u': case 'v': case 'w': case 'x':
+        case 'y': case 'z':
 #define tmac1(c, bit)                                                                              \
     if (!xmac1(c, bit, &))                                                                         \
     goto nomac
-#define xmac1(c, bit, op) ((macbit + COFF)[c] op(bit))
+#define xmac1(c, bit, op) ((macbit + COFF)[(int)(c)] op(bit))
 
             if (flslvl)
                 goto nomac;
@@ -769,14 +660,13 @@ STATIC char *cotoken(register char *p) {
                     break;
             }
             break;
-        } /* end of switch */
-
+        }
         if (isslo)
             return (p);
-    } /* end of infinite loop */
+    }
 }
 
-char *skipbl(register char *p) { /* get next non-blank token */
+EXPORT char *skipbl(register char *p) {
     do {
         outptr = inptr = p;
         p              = cotoken(p);
@@ -784,17 +674,13 @@ char *skipbl(register char *p) { /* get next non-blank token */
     return (p);
 }
 
-STATIC char *unfill(register char *p) {
-    /*
-     * take <= BUFFERSIZ chars from right end of buffer and put them on instack .
-     * slide rest of buffer to the right, update pointers, return new p.
-     */
+LOCAL char *unfill(register char *p) {
     register char *np, *op;
     register int d;
     if (mactop >= MAXFRE) {
         pperror("%s: too much pushback", macnam);
         p = inptr = pend;
-        dump(); /* begin flushing pushback */
+        dump();
         while (mactop > inctop[ifno]) {
             p = refill(p);
             p = inptr = pend;
@@ -822,20 +708,20 @@ STATIC char *unfill(register char *p) {
     op              = pend - BUFFERSIZ;
     if (op < p)
         op = p;
-    for (;;) { /* out with old */
+    for (;;) {
         while ((*np++ = *op++) != '\0')
             ;
         if (eob(op))
             break;
     }
-    endbuf[mactop++] = np; /* mark end of saved text */
+    endbuf[mactop++] = np;
     np               = pbuf + BUFFERSIZ;
     op               = pend - BUFFERSIZ;
     pend             = np;
     if (op < p)
         op = p;
     while (outptr < op)
-        *--np = *--op; /* slide over new */
+        *--np = *--op;
     if (bob(np))
         pperror("token too long");
     d = (int)(np - outptr);
@@ -845,17 +731,17 @@ STATIC char *unfill(register char *p) {
     return (p + d);
 }
 
-STATIC char *doincl(register char *p) {
+LOCAL char *doincl(register char *p) {
     int filok, inctype;
     register char *cp;
     char **dirp, *nfil;
     char isFixedPath;
     char filname[BUFFERSIZ];
 
-    filname[0] = '\0'; /* Make lint quiet */
+    filname[0] = '\0';
     p          = skipbl(p);
     cp         = filname;
-    if (*inptr++ == '<') { /* special <> syntax */
+    if (*inptr++ == '<') {
         inctype = 1;
         for (;;) {
             outptr = inptr = p;
@@ -872,7 +758,7 @@ STATIC char *doincl(register char *p) {
             while (inptr < p)
                 *cp++ = *inptr++;
         }
-    } else if (inptr[-1] == '"') { /* regular "" syntax */
+    } else if (inptr[-1] == '"') {
         inctype = 0;
         while (inptr < p)
             *cp++ = *inptr++;
@@ -882,7 +768,6 @@ STATIC char *doincl(register char *p) {
         pperror("bad include syntax", 0);
         inctype = 2;
     }
-    /* flush current file to \n , then write \n */
     ++flslvl;
     do {
         outptr = inptr = p;
@@ -893,7 +778,6 @@ STATIC char *doincl(register char *p) {
     dump();
     if (inctype == 2)
         return (p);
-    /* look for included file */
     if (ifno + 1 >= MAXINC) {
         pperror("Unreasonable include nesting", 0);
         return (p);
@@ -949,7 +833,6 @@ STATIC char *doincl(register char *p) {
         if (mflag)
             fprintf(mout, "%s: %s\n", input, fnames[ifno]);
 #endif
-        /* save current contents of buffer */
         while (!eob(p))
             p = unfill(p);
         inctop[ifno] = mactop;
@@ -957,7 +840,7 @@ STATIC char *doincl(register char *p) {
     return (p);
 }
 
-STATIC int equfrm(register char *a, register char *p1, register char *p2) {
+LOCAL int equfrm(register char *a, register char *p1, register char *p2) {
     register char c;
     int flag;
     c    = *p2;
@@ -967,33 +850,32 @@ STATIC int equfrm(register char *a, register char *p1, register char *p2) {
     return (flag == SAME);
 }
 
-/* modified version of string compare with pre triming */
-STATIC int xstrcmp(register char *s, char *t) {
+LOCAL int xstrcmp(register char *s, char *t) {
     int cmp;
-    char *snws; /* s last none ws if present */
-    char *tnws; /* t last none ws if present */
-    char slch;  /* s saved ws char */
-    char tlch;  /* t saved ws char */
+    char *snws;
+    char *tnws;
+    char slch;
+    char tlch;
     char *p;
-    while (*s && (*s == ' ' || *s == '\t')) /* PMO fixed first *s to compare to space */
+    while (*s && (*s == ' ' || *s == '\t'))
         s++;
     snws = NULL;
     for (p = s; *p; p++)
         if (*p != ' ' && *p != '\t')
             snws = p;
 
-    if (snws) { /* trim s */
+    if (snws) {
         slch  = *++snws;
         *snws = 0;
     }
-    while (*t && (*t == ' ' || *t == '\t')) /* PMO fixed first *t to compare to space */
+    while (*t && (*t == ' ' || *t == '\t'))
         t++;
     tnws = NULL;
     for (p = t; *p; p++)
         if (*p != ' ' && *p != '\t')
             tnws = p;
 
-    if (tnws) { /* trim t */
+    if (tnws) {
         tlch  = *++tnws;
         *tnws = 0;
     }
@@ -1005,17 +887,17 @@ STATIC int xstrcmp(register char *s, char *t) {
     return cmp;
 }
 
-STATIC char *dodef(char *p) { /* process '#define' */
+LOCAL char *dodef(char *p) {
     register char *pin, *psav, *cf;
     char **pf, **qf;
     int b, c, params;
     struct symtab *np;
-    char quoc; /* moved here to avoid large offset */
+    char quoc;
     char *oldval, *oldsavch;
-    char *formal[MAXFRM];    /* formal[n] is name of nth formal */
-    char formtxt[BUFFERSIZ]; /* space for formal names */
+    char *formal[MAXFRM];
+    char formtxt[BUFFERSIZ];
 
-    formtxt[0] = '\0'; /* Make lint quiet */
+    formtxt[0] = '\0';
 
     if (savch > sbf + SBSIZE - BUFFERSIZ) {
 #ifdef SMALL
@@ -1025,8 +907,8 @@ STATIC char *dodef(char *p) { /* process '#define' */
         newsbf();
 #endif
     }
-    oldsavch = savch; /* to reclaim space if redefinition */
-    ++flslvl;         /* prevent macro expansion during 'define' */
+    oldsavch = savch;
+    ++flslvl;
     p   = skipbl(p);
     pin = inptr;
     if ((toktyp + COFF)[(int)*pin] != IDENT) {
@@ -1037,10 +919,10 @@ STATIC char *dodef(char *p) { /* process '#define' */
     }
     np = slookup(pin, p, 1);
     if ((oldval = np->value) != NULL)
-        savch = oldsavch; /* was previously defined */
+        savch = oldsavch;
     b  = 1;
     cf = pin;
-    while (cf < p) { /* update macbit */
+    while (cf < p) {
         c = *cf++;
         xmac1(c, b, |=);
         b = (b + b) & 0xFF;
@@ -1049,9 +931,9 @@ STATIC char *dodef(char *p) { /* process '#define' */
     outptr = inptr = p;
     p              = cotoken(p);
     pin            = inptr;
-    formal[0]      = "";     /* Prepare for hack at next line... */
-    pf             = formal; /* Make gcc/lint quiet, pf only used with params!=0 */
-    if (*pin == '(') {       /* with parameters; identify the formals */
+    formal[0]      = "";
+    pf             = formal;
+    if (*pin == '(') {
         cf = formtxt;
         pf = formal;
         for (;;) {
@@ -1086,26 +968,22 @@ STATIC char *dodef(char *p) { /* process '#define' */
             }
         }
         if (params == 0)
-            --params; /* #define foo() ... */
+            --params;
     } else if (*pin == '\n') {
         --lineno[ifno];
         --p;
     }
-    /*
-     * remember beginning of macro body, so that we can
-     * warn if a redefinition is different from old value.
-     */
     oldsavch = psav = savch;
     defining        = 1;
-    for (;;) { /* accumulate definition until linefeed */
+    for (;;) {
         outptr = inptr = p;
         p              = cotoken(p);
         pin            = inptr;
         if (*pin == '\\' && pin[1] == '\n')
-            continue; /* ignore escaped lf */
+            continue;
         if (*pin == '\n')
             break;
-        if (params) { /* mark the appearance of formals in the definiton */
+        if (params) {
             if ((toktyp + COFF)[(int)*pin] == IDENT) {
                 for (qf = pf; --qf >= formal;) {
                     if (equfrm(*qf, pin, p)) {
@@ -1115,7 +993,7 @@ STATIC char *dodef(char *p) { /* process '#define' */
                         break;
                     }
                 }
-            } else if (*pin == '"' || *pin == '\'') { /* inside quotation marks, too */
+            } else if (*pin == '"' || *pin == '\'') {
                 quoc = *pin;
                 for (*psav++ = *pin++; pin < p && *pin != quoc;) {
                     while (pin < p && !isid(*pin))
@@ -1146,17 +1024,17 @@ STATIC char *dodef(char *p) { /* process '#define' */
     *psav++  = params;
     *psav++  = '\0';
     defining = 0;
-    if ((cf = oldval) != NULL) { /* redefinition */
-        --cf;                    /* skip no. of params, which may be zero */
+    if ((cf = oldval) != NULL) {
+        --cf;
         while (*--cf)
-            ;                               /* go back to the beginning */
-        if (0 != xstrcmp(++cf, oldsavch)) { /* redefinition different from old */
+            ;
+        if (0 != xstrcmp(++cf, oldsavch)) {
             --lineno[ifno];
             ppwarn("%s redefined", np->name);
             ++lineno[ifno];
             np->value = psav - 1;
         } else
-            psav = oldsavch; /* identical redef.; reclaim space */
+            psav = oldsavch;
     } else
         np->value = psav - 1;
     --flslvl;
@@ -1168,7 +1046,7 @@ STATIC char *dodef(char *p) { /* process '#define' */
 #define fasscan() ptrtab = fastab + COFF
 #define sloscan() ptrtab = slotab + COFF
 
-STATIC void control(register char *p) { /* find and handle preprocessor control lines */
+LOCAL void control(register char *p) {
     register struct symtab *np;
 
     for (;;) {
@@ -1184,17 +1062,17 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
         ++flslvl;
         np = slookup(inptr, p, 0);
         --flslvl;
-        if (np == defloc) { /* define */
+        if (np == defloc) {
             if (flslvl == 0) {
                 p = dodef(p);
                 continue;
             }
-        } else if (np == incloc) { /* include */
+        } else if (np == incloc) {
             if (flslvl == 0) {
                 p = doincl(p);
                 continue;
             }
-        } else if (np == ifnloc) { /* ifndef */
+        } else if (np == ifnloc) {
             ++flslvl;
             p  = skipbl(p);
             np = slookup(inptr, p, 0);
@@ -1203,7 +1081,7 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
                 ++trulvl;
             else
                 ++flslvl;
-        } else if (np == ifdloc) { /* ifdef */
+        } else if (np == ifdloc) {
             ++flslvl;
             p  = skipbl(p);
             np = slookup(inptr, p, 0);
@@ -1212,7 +1090,7 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
                 ++trulvl;
             else
                 ++flslvl;
-        } else if (np == eifloc) { /* endif */
+        } else if (np == eifloc) {
             if (flslvl) {
                 if (--flslvl == 0)
                     sayline();
@@ -1224,7 +1102,7 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
             if (flslvl == 0)
                 elflvl = 0;
             elslvl = 0;
-        } else if (np == elifloc) { /* elif */
+        } else if (np == elifloc) {
             if (flslvl == 0)
                 elflvl = trulvl;
             if (flslvl) {
@@ -1247,8 +1125,7 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
                 --trulvl;
             } else
                 pperror("If-less elif");
-
-        } else if (np == elsloc) { /* else */
+        } else if (np == elsloc) {
             if (flslvl) {
                 if (elflvl > trulvl)
                     ;
@@ -1268,39 +1145,31 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
                 pperror("Too many #else's");
             elslvl = trulvl + flslvl;
 
-        } else if (np == udfloc) { /* undefine */
+        } else if (np == udfloc) {
             if (flslvl == 0) {
                 ++flslvl;
                 p = skipbl(p);
                 slookup(inptr, p, DROP);
                 --flslvl;
             }
-        } else if (np == ifloc) { /* if */
+        } else if (np == ifloc) {
             newp = p;
             if (flslvl == 0 && yyparse())
                 ++trulvl;
             else
                 ++flslvl;
             p = newp;
-        } else if (np == pragmaloc) { /* pragma */
+        } else if (np == pragmaloc) {
             ppwarn("#pragma ignored");
             ++flslvl;
-
             while (*inptr != '\n') {
-                /* skip line */
                 outptr = inptr = p;
                 p              = cotoken(p);
             }
             --flslvl;
-
-        } else if (np == errorloc) { /* error */
-            /*
-             * Write a message to stderr and exit immediately, but only
-             * if #error was in a conditional "active" part of the code.
-             */
+        } else if (np == errorloc) {
             if (flslvl == 0) {
                 char ebuf[BUFFERSIZ];
-
                 p = ebuf;
                 while (*inptr != '\n') {
                     if (*inptr == '\0')
@@ -1316,18 +1185,13 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
                 pperror(ebuf);
                 exit(exfail);
             }
-        } else if (np == lneloc) { /* line */
+        } else if (np == lneloc) {
             if (flslvl == 0 && pflag == 0) {
+                outptr = inptr = p;
 #ifndef SMALL
                 register char *s;
                 register int n;
-#endif
 
-                outptr = inptr = p;
-#ifndef SMALL
-                /*
-                 * Enforce the rest of the line to be in the buffer
-                 */
                 s = p;
                 while (*s && *s != '\n')
                     s++;
@@ -1337,9 +1201,7 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
                 s = inptr;
                 while ((toktyp + COFF)[(int)*s] == BLANK)
                     s++;
-                /*
-                 * Now read the new line number...
-                 */
+
                 n = 0;
                 while (isdigit(*s)) {
                     register int c;
@@ -1366,9 +1228,6 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
                 while ((toktyp + COFF)[(int)*s] == BLANK)
                     s++;
 
-                /*
-                 * In case there is an optional file name...
-                 */
                 if (*s != '\n') {
                     register char *f;
 
@@ -1395,9 +1254,6 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
                     }
                 }
 #endif
-                /*
-                 * Finally outout the rest of the directive.
-                 */
                 *--outptr = '#';
                 while (*inptr != '\n')
                     p = cotoken(p);
@@ -1407,10 +1263,9 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
             while (*inptr != '\n')
                 p = cotoken(p);
         } else if (*++inptr == '\n')
-            outptr = inptr; /* allows blank line after # */
+            outptr = inptr;
         else
             pperror("undefined control", 0);
-        /* flush to lf */
         ++flslvl;
         while (*inptr != '\n') {
             outptr = inptr = p;
@@ -1420,18 +1275,16 @@ STATIC void control(register char *p) { /* find and handle preprocessor control 
     }
 }
 
-STATIC struct symtab *stsym(register char *s) {
+LOCAL struct symtab *stsym(register char *s) {
     register char *p;
     char buf[BUFFERSIZ];
 
-    /* make definition look exactly like end of #define line */
-    /* copy to avoid running off end of world when param list is at end */
     p = buf;
     while ((*p++ = *s++) != '\0')
         ;
     p = buf;
     while (isid(*p++))
-        ; /* skip first identifier */
+        ;
     if (*--p == '=') {
         *p++ = ' ';
         while (*p++)
@@ -1448,7 +1301,7 @@ STATIC struct symtab *stsym(register char *s) {
     return (lastsym);
 }
 
-STATIC struct symtab *ppsym(char *s) { /* kluge */
+LOCAL struct symtab *ppsym(char *s) {
     register struct symtab *sp;
     cinit    = SALT;
     *savch++ = SALT;
@@ -1458,44 +1311,68 @@ STATIC struct symtab *ppsym(char *s) { /* kluge */
     return (sp);
 }
 
+#ifndef z80
 EXPORT void _pperror(char *fmt, va_list args) {
-
     if (fnames[ifno] && fnames[ifno][0])
         fprintf(stderr, "%s: line ", fnames[ifno]);
     fprintf(stderr, "%d: ", lineno[ifno]);
-
     vfprintf(stderr, fmt, args);
     fputc('\n', stderr);
     exfail++;
 }
+#endif
 
 EXPORT void pperror(char *fmt, ...) {
+#ifndef z80
     va_list args;
-
     va_start(args, fmt);
     _pperror(fmt, args);
     va_end(args);
+#else
+    if (fnames[ifno] && fnames[ifno][0])
+        fprintf(stderr, "%s: line ", fnames[ifno]);
+    fprintf(stderr, "%d: ", lineno[ifno]);
+    fprintf(stderr, fmt);
+    fputc('\n', stderr);
+    exfail++;
+#endif
 }
 
 EXPORT void yyerror(char *fmt, ...) {
+#ifndef z80
     va_list args;
-
     va_start(args, fmt);
-
     _pperror(fmt, args);
     va_end(args);
+#else
+    if (fnames[ifno] && fnames[ifno][0])
+        fprintf(stderr, "%s: line ", fnames[ifno]);
+    fprintf(stderr, "%d: ", lineno[ifno]);
+    fprintf(stderr, fmt);
+    fputc('\n', stderr);
+    exfail++;
+#endif
 }
 
-STATIC void ppwarn(char *fmt, ...) {
-    va_list args;
+LOCAL void ppwarn(char *fmt, ...) {
     int fail = exfail;
     exfail   = -1;
-
+#ifndef z80
+    va_list args;
     va_start(args, fmt);
-
-    _pperror(fmt, args);
+    if (fnames[ifno] && fnames[ifno][0])
+        fprintf(stderr, "%s: line ", fnames[ifno]);
+    fprintf(stderr, "%d: ", lineno[ifno]);
+    vfprintf(stderr, fmt, args);
+    fputc('\n', stderr);
     va_end(args);
-
+#else
+    if (fnames[ifno] && fnames[ifno][0])
+        fprintf(stderr, "%s: line ", fnames[ifno]);
+    fprintf(stderr, "%d: ", lineno[ifno]);
+    fprintf(stderr, fmt);
+    fputc('\n', stderr);
+#endif
     exfail = fail;
 }
 
@@ -1507,12 +1384,11 @@ struct symtab *lookup(char *namep, int enterf) {
     int around = 0;
 #else
     struct symtab *prev;
-    static struct symtab nsym; /* Hack: Dummy nulled symtab */
+    static struct symtab nsym;
 #endif
 
     np = namep;
     i  = cinit;
-    /* calc crc on at most 8 chars */
     while (np < namep + 8 && (c = *(unsigned char *)np++))
         i += i + c;
     c = i % symsiz;
@@ -1541,7 +1417,6 @@ struct symtab *lookup(char *namep, int enterf) {
         sp->name = namep;
     return (lastsym = sp);
 #else
-
     sp   = stab[c];
     prev = sp;
 
@@ -1570,29 +1445,24 @@ struct symtab *lookup(char *namep, int enterf) {
         else
             stab[c] = sp;
     }
-    /*
-     * Hack: emulate the behavior of the old code with static stab[], where
-     * a non-matching request returns a zeroed (because previously empty)
-     * struct symtab.
-     */
     if (sp == NULL)
         sp = &nsym;
     return (lastsym = sp);
 #endif
 }
 
-STATIC struct symtab *slookup(register char *p1, register char *p2, int enterf) {
+LOCAL struct symtab *slookup(register char *p1, register char *p2, int enterf) {
     register char *p3;
     char c2, c3;
     struct symtab *np;
     c2  = *p2;
-    *p2 = '\0'; /* mark end of token */
+    *p2 = '\0';
     if ((p2 - p1) > SYMLEN)
         p3 = p1 + SYMLEN;
     else
         p3 = p2;
     c3  = *p3;
-    *p3 = '\0'; /* truncate to symlen chars or less */
+    *p3 = '\0';
     if (enterf == 1)
         p1 = copy(p1);
     np  = lookup(p1, enterf);
@@ -1605,13 +1475,13 @@ STATIC struct symtab *slookup(register char *p1, register char *p2, int enterf) 
     return (np);
 }
 
-STATIC char *subst(register char *p, struct symtab *sp) {
+LOCAL char *subst(register char *p, struct symtab *sp) {
     static char match[] = "%s: argument mismatch";
     register char *ca, *vp;
     int params;
-    register char **pa;     /* moved here to avoid large offset */
-    char *actual[MAXFRM];   /* actual[n] is text of nth actual */
-    char acttxt[BUFFERSIZ]; /* space for actuals */
+    register char **pa;
+    char *actual[MAXFRM];
+    char acttxt[BUFFERSIZ];
 
     if (0 == (vp = sp->value))
         return (p);
@@ -1621,9 +1491,9 @@ STATIC char *subst(register char *p, struct symtab *sp) {
             return (p);
         }
     } else
-        maclvl = 0; /* level decreased */
+        maclvl = 0;
     macforw = p;
-    macdam  = 0; /* new target for decrease in level */
+    macdam  = 0;
     macnam  = sp->name;
     dump();
     if (sp == ulnloc) {
@@ -1637,7 +1507,7 @@ STATIC char *subst(register char *p, struct symtab *sp) {
         *vp++ = '\0';
         ca    = fnames[ifno];
         *vp++ = '"';
-        while (*ca) { /* original didn't expand \ to \\ in string */
+        while (*ca) {
             if (*ca == '\\')
                 *vp++ = '\\';
             *vp++ = *ca++;
@@ -1645,17 +1515,17 @@ STATIC char *subst(register char *p, struct symtab *sp) {
         *vp++ = '"';
         *vp++ = '\0';
     }
-    if (0 != (params = *--vp & 0xFF)) { /* definition calls for params */
+    if (0 != (params = *--vp & 0xFF)) {
         ca = acttxt;
         pa = actual;
         if (params == 0xFF)
-            params = 1; /* #define foo() ... */
+            params = 1;
         sloscan();
-        ++flslvl; /* no expansion during search for actuals */
+        ++flslvl;
         plvl = -1;
         do
             p = skipbl(p);
-        while (*inptr == '\n'); /* skip \n too */
+        while (*inptr == '\n');
         if (*inptr == '(') {
             maclin = lineno[ifno];
             macfil = fnames[ifno];
@@ -1688,21 +1558,20 @@ STATIC char *subst(register char *p, struct symtab *sp) {
         if (params != 0)
             ppwarn(match, sp->name);
         while (--params >= 0)
-            *pa++ = &""[1]; /* null string for missing actuals */
+            *pa++ = &""[1];
         --flslvl;
         fasscan();
     }
-    for (;;) {                   /* push definition onto front of input stack */
-        while (!iswarn(*--vp)) { /* Terminates with '\0' also */
+    for (;;) {
+        while (!iswarn(*--vp)) {
             if (bob(p)) {
                 outptr = inptr = p;
                 p              = unfill(p);
             }
             *--p = *vp;
         }
-        if (*vp == warnc) { /* insert actual param */
-            if (vp[-1] ==
-                warnc) { /* allow for 0xfe as an actual character, encoded as warnc warnc */
+        if (*vp == warnc) {
+            if (vp[-1] == warnc) {
                 *--p = *--vp;
                 continue;
             }
@@ -1721,27 +1590,26 @@ STATIC char *subst(register char *p, struct symtab *sp) {
     return (p);
 }
 
-/* note hitech original trimmed to / if present */
-STATIC char *trmdir(register char *s) {
+LOCAL char *trmdir(register char *s) {
     register char *p;
 
-    p = strchr(s, '\0'); /* let the compiler use builtins to find end of s */
+    p = strchr(s, '\0');
     while (--p > s && !ISDIRSEP(*p))
         ;
 
 #ifndef CPM
-    if (p == s) /* unix use dot as current directory */
+    if (p == s)
         *p++ = '.';
     else
 #endif
-        if (*p == ':') { /* cpm support drive (cpm may also  user number before the : */
+        if (*p == ':') {
         p++;
     }
     *p = '\0';
     return (s);
 }
 
-STATIC char *copy(register char *s) {
+LOCAL char *copy(register char *s) {
     register char *old;
 
     old = savch;
@@ -1750,7 +1618,7 @@ STATIC char *copy(register char *s) {
     return (old);
 }
 
-int yywrap() {
+int yywrap(void) {
     return (1);
 }
 
@@ -1758,55 +1626,56 @@ int main(int argc, char *argv[]) {
     register int i, c;
     register char *p;
     char *tf, **cp2;
+#ifndef SMALL
+    char *s;
+#endif
 
 #ifndef CPM
     char *sysdir = NULL;
 #endif
-    /* if (argc == 1) {
-        argv = _getargs(NULL, "cpp");
-        argc = _argc_;
-    } */
-    #ifdef USE_GETARGS
-    if (argc == 0)
+
+    if (USE_GETARGS)
     {
-        argv = _getargs(NULL, "cpp");
-        argc = _argc_;
+        if (argc == 0 || argc == 1)
+        {
+            argv = _getargs(NULL, "cpp");
+            argc = _argc_;
+        }
     }
-    #endif
-    fin  = stdin; /* Mac OS X is not POSIX compliant (stdout nonconst.) */
+    fin  = stdin;
     fout = stdout;
 
     p    = "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     i    = 0;
     while ((c = *p++)) {
-        (fastab + COFF)[c] |= IB | NB | SB;
-        (toktyp + COFF)[c] = IDENT;
+        (fastab + COFF)[(int)c] |= IB | NB | SB;
+        (toktyp + COFF)[(int)c] = IDENT;
     }
     p = "0123456789.";
     while ((c = *p++) != '\0') {
-        (fastab + COFF)[c] |= NB | SB;
-        (toktyp + COFF)[c] = NUMBR;
+        (fastab + COFF)[(int)c] |= NB | SB;
+        (toktyp + COFF)[(int)c] = NUMBR;
     }
     p = "\n\"'/\\";
     while ((c = *p++) != '\0')
-        (fastab + COFF)[c] |= SB;
+        (fastab + COFF)[(int)c] |= SB;
     p = "\n\"'\\";
     while ((c = *p++) != '\0')
-        (fastab + COFF)[c] |= QB;
+        (fastab + COFF)[(int)c] |= QB;
     p = "*\n";
     while ((c = *p++) != '\0')
-        (fastab + COFF)[c] |= CB;
+        (fastab + COFF)[(int)c] |= CB;
     (fastab + COFF)[(int)warnc] |= WB;
     (fastab + COFF)['\0'] |= CB | QB | SB | WB;
     for (i = ALFSIZ; --i >= 0;)
         slotab[i] = fastab[i] | SB;
-    p = " \t\013\f\r"; /* note no \n;	\v not legal for vertical tab? */
+    p = " \t\013\f\r";
     while ((c = *p++))
-        (toktyp + COFF)[c] = BLANK;
+        (toktyp + COFF)[(int)c] = BLANK;
 
-    fnames[ifno = 0] = ""; /* Allow pperror() to work correctly	  */
+    fnames[ifno = 0] = "";
 #ifndef SMALL
-    newsbf(); /* Must be called before copy() / ppsym() */
+    newsbf();
 #endif
 #if defined(unix)
     dirs[0] = dirnams[0] = ".";
@@ -1833,7 +1702,6 @@ int main(int argc, char *argv[]) {
                 pperror("too many -D options, ignoring %s", argv[i]);
                 break;
             }
-            /* ignore plain "-D" (no argument) */
             if (*(argv[i] + 2))
                 *predef++ = argv[i] + 2;
             break;
@@ -1851,9 +1719,9 @@ int main(int argc, char *argv[]) {
             if (nd >= MAXIDIRS) {
                 pperror("excessive -I file (%s) ignored", argv[i]);
             } else {
-                if (argv[i][2]) { /* -I/path/to/includes */
+                if (argv[i][2]) {
                     dirs[nd++] = argv[i] + 2;
-                } else { /* -I <path> */
+                } else {
                     if (++i >= argc) {
                         pperror("missing argument for -I option", 0);
                         exit(1);
@@ -1863,13 +1731,13 @@ int main(int argc, char *argv[]) {
             }
             break;
 #ifndef SMALL
-        case 'H': /* Print included filenames */
+        case 'H':
             hflag++;
             break;
-        case 'M': /* Generate make dependencies */
+        case 'M':
             mflag++;
             break;
-        case 'Y': /* Replace system include dir */
+        case 'Y':
             sysdir = argv[i] + 2;
             break;
         case '\0':
@@ -1900,7 +1768,7 @@ int main(int argc, char *argv[]) {
 #endif
         default:
             pperror("unknown flag %s", argv[i]);
-            exit(1); /* Exit on unknown flag */
+            exit(1);
         }
     }
 
@@ -1923,22 +1791,18 @@ int main(int argc, char *argv[]) {
     }
 
 #ifndef SMALL
-    /* CPM doesn't support the NULL device, so omit support rather than
-     * make changes where fout is used. also omit for SMALL build
-     */
     if (mflag) {
         if (input == NULL) {
             pperror("cpp: no input file specified with -M flag");
             exit(8);
         }
-        input = fname(input); /* strip off path */
-        p     = strrchr(input, '.');
+        input = fname(input);
+        p = strrchr(input, '.');
         if (p == NULL || p[1] == '\0') {
             pperror("cpp: no filename suffix");
             exit(8);
         }
-        char *s =
-            malloc(p - input + 5); /* PMO - original assumed .o as output file. Hi-Tech uses .obj */
+        s = malloc(p - input + 5);
         strcpy(s, input);
         strcpy(s + (p - input), ".obj");
         input = s;
@@ -1952,15 +1816,10 @@ int main(int argc, char *argv[]) {
 
     fins[ifno] = fin;
     exfail     = 0;
-/* after user -I files here are the standard include libraries */
 #ifndef CPM
     if (sysdir) {
         dirs[nd++] = sysdir;
     } else if (!noinclude) {
-        /* use environment variable to reflect where the cross compiler includes are
-         * if INCDIR80 is defined then use it as the include directory
-         * else if HITECH is defined then use it as the include directory after appending /include80
-         */
         char *s;
         char *subdir = "/include80";
         if ((s = getenv("INCDIR80")))
@@ -1981,20 +1840,20 @@ int main(int argc, char *argv[]) {
     incloc     = ppsym("include");
     elsloc     = ppsym("else");
     eifloc     = ppsym("endif");
-    elifloc    = ppsym("elif"); /* new */
+    elifloc    = ppsym("elif");
     ifdloc     = ppsym("ifdef");
     ifnloc     = ppsym("ifndef");
     ifloc      = ppsym("if");
     lneloc     = ppsym("line");
-    asmloc     = ppsym("asm");    /* from hitech */
-    easloc     = ppsym("endasm"); /* from hitech */
-    pragmaloc  = ppsym("pragma"); /* new ignored */
-    errorloc   = ppsym("error");  /* new */
+    asmloc     = ppsym("asm");
+    easloc     = ppsym("endasm");
+    pragmaloc  = ppsym("pragma");
+    errorloc   = ppsym("error");
 
     memset(macbit, 0, sizeof(macbit));
 
     if (!nopredef) {
-        varloc = stsym("z80"); /* this is a cross compiler cpp so only define z80, HI_TECH_C */
+        varloc = stsym("z80");
         stsym("HI_TECH_C");
 #ifndef CPM
         stsym("_HOSTED");
@@ -2039,22 +1898,15 @@ int main(int argc, char *argv[]) {
 }
 
 #ifndef SMALL
-STATIC void newsbf() {
-    /*
-     * All name space in symbols is obtained from sbf[] via copy(), so we
-     * cannot use realloc() here as this might relocate sbf[]. We instead
-     * throw away the last part of the current sbf[] and allocate new space
-     * for new symbols.
-     */
-
+LOCAL void newsbf() {
     if ((sbf = malloc(SBSIZE)) == NULL) {
         pperror("no buffer space");
         exit(exfail);
     }
-    savch = sbf; /* Start at new buffer space */
+    savch = sbf;
 }
 
-STATIC struct symtab *newsym() {
+LOCAL struct symtab *newsym() {
     static int nelem           = 0;
     static struct symtab *syms = NULL;
 
@@ -2070,11 +1922,9 @@ STATIC struct symtab *newsym() {
     return (syms++);
 }
 
-STATIC void usage()
-{
+LOCAL void usage() {
     fprintf(stderr, "Usage: cpp [options] [input-file [output-file]]\n");
     fprintf(stderr, "Options:\n");
-
     fprintf(stderr, "    -C          Pass all comments.\n");
     fprintf(stderr, "    -Dname      Defines name as 1.\n");
     fprintf(stderr, "    -Dname=var  Defines name as val.\n");

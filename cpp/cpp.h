@@ -54,4 +54,10 @@ char **_getargs(char *_str, const char *_name);
 #endif
 char *fname(char *name);
 
+#ifdef z80
+#define bool char
+#define true 1
+#define false 0
+#endif
+
 #endif /* _CPP_H */

@@ -1751,7 +1751,7 @@ int main(int argc, char *argv[]) {
                 printf("\n");
                 printf("Copyright (C) 1978 AT&T (John F. Reiser)\n");
                 printf("Copyright (C) 2010-2021 Joerg Schilling\n");
-                printf("Additional Changes Mark Ogden\n");
+                printf("Copyright (C) 2026 Leandro Vital Catarin\n");
                 exit(0);
             }
 #ifndef CPM

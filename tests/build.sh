@@ -41,7 +41,7 @@ echo "Step 5: Assemble the code"
 
 # Step 6: Link the object files
 echo "Step 6: Link the object files"
-../link/link -z -ptext=0,data,bss -c100h -otest.com crtcpm.obj test.obj libc.lib libf.lib || {
+../link/link -z -ptext=0,data,bss -c100h -otest.com ../share/lib/crtcpm.obj test.obj ../share/lib/libc.lib ../share/lib/libf.lib || {
     echo "Linking failed!"
     exit 1
 }

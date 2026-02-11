@@ -264,7 +264,7 @@ STATIC int elflvl;
 STATIC int elslvl;
 
 #ifndef z80
-#if !defined(CPM)
+#ifndef CPM
 #define fread(ptr, size, count, stream) afread(ptr, count, stream)
 size_t afread(void *ptr, size_t count, C_FILE *stream) {
     int c   = 0;
@@ -1189,68 +1189,68 @@ LOCAL void control(register char *p) {
             if (flslvl == 0 && pflag == 0) {
                 outptr = inptr = p;
 #ifndef SMALL
-                register char *s;
-                register int n;
-
-                s = p;
-                while (*s && *s != '\n')
-                    s++;
-                if (eob(s))
-                    p = refill(s);
-
-                s = inptr;
-                while ((toktyp + COFF)[(int)*s] == BLANK)
-                    s++;
-
-                n = 0;
-                while (isdigit(*s)) {
+                {
+                    register char *s;
+                    register int n;
                     register int c;
-
-                    if (n > MAXMULT) {
-                        pperror("bad number for #line");
-                        n = MAXVAL;
-                        break;
-                    }
-                    n *= 10;
-                    c = *s++ - '0';
-                    if ((MAXVAL - n) < c) {
-                        pperror("bad number for #line");
-                        n = MAXVAL;
-                        break;
-                    }
-                    n += c;
-                }
-                if (n == 0)
-                    pperror("bad number for #line");
-                else
-                    lineno[ifno] = n - 1;
-
-                while ((toktyp + COFF)[(int)*s] == BLANK)
-                    s++;
-
-                if (*s != '\n') {
                     register char *f;
 
-                    f = s;
-                    while (*f && *f != '\n')
-                        f++;
+                    s = p;
+                    while (*s && *s != '\n')
+                        s++;
+                    if (eob(s))
+                        p = refill(s);
 
-                    if (savch >= sbf + SBSIZE - (f - s)) {
-                        newsbf();
-                    }
-                    f = savch;
-                    if (*s != '"')
-                        *f++ = *s;
-                    s++;
-                    while (*s) {
-                        if (*s == '"' || *s == '\n')
+                    s = inptr;
+                    while ((toktyp + COFF)[(int)*s] == BLANK)
+                        s++;
+
+                    n = 0;
+                    while (isdigit(*s)) {
+                        if (n > MAXMULT) {
+                            pperror("bad number for #line");
+                            n = MAXVAL;
                             break;
-                        *f++ = *s++;
+                        }
+                        n *= 10;
+                        c = *s++ - '0';
+                        if ((MAXVAL - n) < c) {
+                            pperror("bad number for #line");
+                            n = MAXVAL;
+                            break;
+                        }
+                        n += c;
                     }
-                    *f++ = '\0';
-                    if (strcmp(savch, fnames[ifno])) {
-                        fnames[ifno] = savch;
-                        savch        = f;
+                    if (n == 0)
+                        pperror("bad number for #line");
+                    else
+                        lineno[ifno] = n - 1;
+
+                    while ((toktyp + COFF)[(int)*s] == BLANK)
+                        s++;
+
+                    if (*s != '\n') {
+                        f = s;
+                        while (*f && *f != '\n')
+                            f++;
+
+                        if (savch >= sbf + SBSIZE - (f - s)) {
+                            newsbf();
+                        }
+                        f = savch;
+                        if (*s != '"')
+                            *f++ = *s;
+                        s++;
+                        while (*s) {
+                            if (*s == '"' || *s == '\n')
+                                break;
+                            *f++ = *s++;
+                        }
+                        *f++ = '\0';
+                        if (strcmp(savch, fnames[ifno])) {
+                            fnames[ifno] = savch;
+                            savch        = f;
+                        }
                     }
                 }
 #endif
@@ -1394,9 +1394,9 @@ struct symtab *lookup(char *namep, int enterf) {
     c = i % symsiz;
 #ifdef SMALL
     sp = &stab[c];
-    while (snp = sp->name) {
+    while ((snp = sp->name) != NULL) {
         np = namep;
-        while (*snp++ == *np)
+        while (*snp++ == *np) {
             if (*np++ == '\0') {
                 if (enterf == DROP) {
                     sp->name[0] = DROP;
@@ -1404,7 +1404,8 @@ struct symtab *lookup(char *namep, int enterf) {
                 }
                 return (lastsym = sp);
             }
-        if (--sp < &stab[0])
+        }
+        if (--sp < &stab[0]) {
             if (around) {
                 pperror("too many defines", 0);
                 exit(exfail);
@@ -1412,6 +1413,7 @@ struct symtab *lookup(char *namep, int enterf) {
                 ++around;
                 sp = &stab[symsiz - 1];
             }
+        }
     }
     if (enterf > 0)
         sp->name = namep;
@@ -1898,7 +1900,7 @@ int main(int argc, char *argv[]) {
 }
 
 #ifndef SMALL
-LOCAL void newsbf() {
+LOCAL void newsbf(void) {
     if ((sbf = malloc(SBSIZE)) == NULL) {
         pperror("no buffer space");
         exit(exfail);
@@ -1906,7 +1908,7 @@ LOCAL void newsbf() {
     savch = sbf;
 }
 
-LOCAL struct symtab *newsym() {
+LOCAL struct symtab *newsym(void) {
     static int nelem           = 0;
     static struct symtab *syms = NULL;
 
@@ -1922,7 +1924,7 @@ LOCAL struct symtab *newsym() {
     return (syms++);
 }
 
-LOCAL void usage() {
+LOCAL void usage(void) {
     fprintf(stderr, "Usage: cpp [options] [input-file [output-file]]\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "    -C          Pass all comments.\n");

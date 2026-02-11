@@ -1847,10 +1847,19 @@ int main(int argc, char *argv[]) {
                 nopredef = 1;
             break;
         case 'I':
-            if (nd >= MAXIDIRS)
+            if (nd >= MAXIDIRS) {
                 pperror("excessive -I file (%s) ignored", argv[i]);
-            else
-                dirs[nd++] = argv[i] + 2;
+            } else {
+                if (argv[i][2]) { /* -I/path/to/includes */
+                    dirs[nd++] = argv[i] + 2;
+                } else { /* -I <path> */
+                    if (++i >= argc) {
+                        pperror("missing argument for -I option", 0);
+                        exit(1);
+                    }
+                    dirs[nd++] = argv[i];
+                }
+            }
             break;
 #ifndef SMALL
         case 'H': /* Print included filenames */

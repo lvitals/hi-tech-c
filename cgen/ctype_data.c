@@ -11,36 +11,6 @@
 #define _C 0x20
 #define _X 0x40
 
-// pack function definition
-int pack(void) {
-    // A real implementation would coalesce free blocks.
-    // Returning 0 means "no packing happened, try sbrk".
-    return 0;
-}
-
-// Corrected setSize function implementation to match Len/BlkAddr macros
-uint8_t *setSize(register uint8_t *p_raw_block_start, short total_allocated_size) {
-    uint8_t header_len;
-    uint16_t data_size;
-
-    if (total_allocated_size - 1 < 128) {
-        header_len = 1;
-    } else {
-        header_len = 3;
-    }
-
-    data_size = total_allocated_size - header_len;
-
-    if (header_len == 1) {
-        *p_raw_block_start = (uint8_t)data_size;
-    } else { // 3-byte header
-        *p_raw_block_start = 0x80;
-        *(uint16_t *)(p_raw_block_start + 1) = data_size;
-    }
-
-    return p_raw_block_start + header_len;
-}
-
 // _ctype_ array definition and functions (as before)
 unsigned char _ctype_[257] = {
     0, // EOF (index 0)

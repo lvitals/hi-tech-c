@@ -88,10 +88,37 @@ char **_getargs(char *_str, char *_name)
     quote = 0;
     name = _name;
     str = _str;
-    
+
+#ifdef CPM
+    if (str == NULL)
+    {
+        char *cmd_len_ptr = (char *)0x80;
+        int len = (int)(*cmd_len_ptr);
+        static char cmd_buf[129];
+
+        if (len > 0 && len < 128)
+        {
+            memcpy(cmd_buf, (char *)(cmd_len_ptr + 1), len);
+            cmd_buf[len] = 0;
+            str = cmd_buf;
+            interactive = 0;
+        }
+        else
+        {
+            interactive = 1;
+            str = "\\";
+        }
+    }
+    else
+    {
+        interactive = 0;
+    }
+#else
     if ((interactive = (str == NULL) ? 1 : 0))
         str = "\\";
-    else
+#endif
+
+    if (!interactive)
     {
         while (*str == ' ' || *str == '\t')
             str++;

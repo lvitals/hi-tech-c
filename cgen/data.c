@@ -29,19 +29,9 @@ uint8_t byte_B014;        /* sub_3CDF, sub_3DC9 */
 char *warningMsg;         /* Pointer for printf      */
 int word_B017;            /* leaveBlock, sub_6D1, sub_283E, sub_2BD0, sub_61AA */
 bool wflag;               /* Warning messages	   */
-#if 0
-bool pflag;               /* Not used		   */
-bool hflag;               /* Not used		   */
-#endif
 int errcnt; /* Number of errors	   */
-#if 0
-bool bflag;               /* Not used		   */
-#endif
 #ifdef CPM
 char *baseHeap; /* Current highest memory  */
-#endif
-#if 0
-bool eflag; /* Not used		   */
 #endif
 bool rflag;
 

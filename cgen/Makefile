@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -Werror -O3 -std=c89
 # ifeq ($(shell uname), Linux)
 #   CFLAGS += -Wno-implicit-fallthrough -Wno-stringop-truncation -Wno-stringop-overflow
 # endif
-SRCS = code.c data.c getchar.c lex.c main.c malloc.c
+SRCS = code.c data.c getchar.c lex.c main.c getargs.c fname.c
 OBJS = $(SRCS:.c=.o)
 
 HEADERS = cgen.h

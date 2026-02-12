@@ -6,6 +6,13 @@
  *********************************************************/
 int main(int argc, char **argv)
 {
+#ifdef USE_GETARGS
+    if (argc == 0 || argc == 1)
+    {
+        argv = _getargs(NULL, "cgen");
+        argc = _argc_;
+    }
+#endif
 
 #ifdef CPM
     baseHeap = sbrk(0); /* Current highest memory */
@@ -31,14 +38,14 @@ int main(int argc, char **argv)
 #ifdef CPM
     if (argc-- > 0)
     {
-        if (freopen(*argv, "r", 0) == 0) /* Open input file */
+        if (freopen(*argv, "r", stdin) == 0) /* Open input file */
             fatalErr("Can't open %s", *argv);
-        else if (argc > 0 && freopen(argv[1], "w", 1) == 0) /* Open output file */
+        else if (argc > 0 && freopen(argv[1], "w", stdout) == 0) /* Open output file */
             fatalErr("Can't create %s", argv[1]);
     }
     sub_1680();  /* First_init */
     parseStmt(); /* Compiling intermediate code */
-    if (fclose(1) == (-1))
+    if (fclose(stdout) == (-1))
     { /* Close output file */
         prError("Error closing output file");
     }
@@ -71,7 +78,7 @@ _Noreturn void fatalErr(char *fmt, ...)
 {
 #ifdef CPM
     prMsg(fmt, (char *)&((&fmt)[1]));
-    fclose(1);
+    fclose(stdout);
     exit(2);
 #else
     va_list args;
@@ -93,9 +100,9 @@ void prWarning(char *fmt, ...)
     if (wflag == 0)
     {
 #ifdef CPM
-        fprintf(2, "%s:%d:\t", progname, lineno);
-        _doprnt(2, fmt, (char *)&((&fmt)[1]));
-        fprintf(2, " (warning)\n");
+        fprintf(stderr, "%s:%d:\t", progname, lineno);
+        _doprnt(stderr, fmt, (char *)&((&fmt)[1]));
+        fprintf(stderr, " (warning)\n");
 #else
         va_list args;
         fprintf(stderr, "%s:%d:\t", progname, lineno);
@@ -133,9 +140,9 @@ void prError(char *fmt, ...)
 #ifdef CPM
 void prMsg(char *fmt, char *args)
 {
-    fprintf(2, "%s:%d:\t", progname, lineno);
-    _doprnt(2, fmt, args);
-    fputc('\n', 2);
+    fprintf(stderr, "%s:%d:\t", progname, lineno);
+    _doprnt(stderr, fmt, args);
+    fputc('\n', stderr);
 }
 #else
 void prMsg(char *fmt, va_list args)

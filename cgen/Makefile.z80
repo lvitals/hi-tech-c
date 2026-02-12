@@ -10,7 +10,7 @@ HOST_LINK = ../link/link
 HOST_CPM = ../cpm/cpm
 
 # Source files for cgen (these are compiled for Z80 CP/M)
-CGEN_SRCS = code.c data.c getchar.c lex.c main.c malloc.c
+CGEN_SRCS = code.c data.c getchar.c lex.c main.c ctype_data.c getargs.c fname.c
 CGEN_OBJS = $(CGEN_SRCS:.c=.obj)
 
 # Shared include and library paths

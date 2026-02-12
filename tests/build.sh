@@ -1,5 +1,5 @@
 #!/bin/sh
-# set -x
+set -x
 
 # Script to build test.com from test.c
 # Ensure required tools are in the correct paths
@@ -21,12 +21,14 @@ echo "Step 2: Run CP/M compiler"
 # Step 3: Generate assembly code
 echo "Step 3: Generate assembly code"
 ../cgen/cgen test2.tmp test1.tmp || {
+# ../cpm/cpm cgen.com test2.tmp TEST1.TMP || {
     echo "Code generation failed!"
     exit 1
 }
 
 # Step 4: Apply optimization to the generated code (this is the new step)
 echo "Step 4: Apply optimization"
+# ../optim/optim TEST1.TMP test2.tmp || {
 ../optim/optim test1.tmp test2.tmp || {
     echo "Optimization failed!"
     exit 1

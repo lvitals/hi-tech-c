@@ -1,9 +1,39 @@
 #ifndef _CGEN_H
 #define _CGEN_H 1
 
+#include <stdio.h>
+
+#ifdef CPM
+#define USE_GETARGS 1
+#endif
+
+#ifdef USE_GETARGS
+extern int _argc_;
+char **_getargs(char *, char *);
+#endif
+
+
 /*
 #define DEBUG
 */
+
+#ifdef z80
+
+typedef struct _iobuf C_FILE;
+extern C_FILE *fopen();
+extern C_FILE *freopen();
+extern int fclose();
+extern int fread();;
+extern C_FILE _iob[];
+#undef stdin
+#define stdin (&_iob[0])
+#undef stdout
+#define stdout (&_iob[1])
+#undef stderr
+#define stderr (&_iob[2])
+#else
+typedef FILE C_FILE;
+#endif
 
 #ifdef CPM
 /* Definir EOF e descritores de arquivo para CP/M */
@@ -28,18 +58,16 @@
 /* Prototypes for stdio/stdlib functions for Hi-Tech C */
 extern int _doprnt();
 extern int fprintf();
-extern int fputc(int, int);
-extern int fgetc(int);
-extern int freopen();
-extern int fclose();
+extern int fputc(int, C_FILE *);
+extern int fgetc(C_FILE *);
 
-/* Workaround for ctype functions */
-int isspace(int c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v'; }
-int isdigit(int c) { return c >= '0' && c <= '9'; }
-int isalpha(int c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
-int isalnum(int c) { return isalpha(c) || isdigit(c); }
-int isupper(int c) { return c >= 'A' && c <= 'Z'; }
-int isxdigit(int c) { return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'); }
+/* Explicit declarations for ctype functions for p1 */
+extern int isalnum(int);
+extern int isalpha(int);
+extern int isdigit(int);
+extern int isspace(int);
+extern int isupper(int);
+extern int isxdigit(int);
 #endif
 
 #include <assert.h>

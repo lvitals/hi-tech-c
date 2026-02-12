@@ -4,6 +4,44 @@
 /*
 #define DEBUG
 */
+
+#ifdef CPM
+/* Definir EOF e descritores de arquivo para CP/M */
+#ifndef EOF
+#define EOF (-1)
+#endif
+#ifndef FILE
+#define FILE int
+#endif
+#ifndef stdin
+#define stdin 0
+#endif
+#ifndef stdout
+#define stdout 1
+#endif
+#ifndef stderr
+#define stderr 2
+#endif
+#ifndef NULL
+#define NULL 0
+#endif
+/* Prototypes for stdio/stdlib functions for Hi-Tech C */
+extern int _doprnt();
+extern int fprintf();
+extern int fputc(int, int);
+extern int fgetc(int);
+extern int freopen();
+extern int fclose();
+
+/* Workaround for ctype functions */
+int isspace(int c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v'; }
+int isdigit(int c) { return c >= '0' && c <= '9'; }
+int isalpha(int c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+int isalnum(int c) { return isalpha(c) || isdigit(c); }
+int isupper(int c) { return c >= 'A' && c <= 'Z'; }
+int isxdigit(int c) { return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'); }
+#endif
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>

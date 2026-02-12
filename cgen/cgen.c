@@ -1,8 +1,46 @@
 /*
- * File data.c Created 17.05.2019 Last Modified 03.02.2021
+ * File cgen.c Created 17.05.2019 Last Modified 03.02.2021
  */
 
 #include "cgen.h"
+
+#ifdef CPM
+/* Definir EOF e descritores de arquivo para CP/M */
+#ifndef EOF
+#define EOF (-1)
+#endif
+#ifndef FILE
+#define FILE int
+#endif
+#ifndef stdin
+#define stdin 0
+#endif
+#ifndef stdout
+#define stdout 1
+#endif
+#ifndef stderr
+#define stderr 2
+#endif
+#ifndef NULL
+#define NULL 0
+#endif
+/* Prototypes for stdio/stdlib functions for Hi-Tech C */
+extern int _doprnt();
+extern int fprintf();
+extern int fputc(int, int);
+extern int fgetc(int);
+extern int freopen();
+extern int fclose();
+extern int atoi();
+/* Workaround for ctype functions */
+int isspace(int c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v'; }
+int isdigit(int c) { return c >= '0' && c <= '9'; }
+int isalpha(int c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+int isalnum(int c) { return isalpha(c) || isdigit(c); }
+int isupper(int c) { return c >= 'A' && c <= 'Z'; }
+int isxdigit(int c) { return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'); }
+#endif
+
 /* ===== start bss section ======= */
 
 int lineno;             /* getToken, sub_6AD0, prMsg*/
@@ -1789,6 +1827,7 @@ void parseSwitch()
             jp  c,l{defaultCodeLabel}
          1: add hl,hl
             ld  de,S{swTableLabel}
+            add hl,de
             ld  a,(hl)
             inc hl
             ld  h,(hl)
@@ -1811,7 +1850,9 @@ void parseSwitch()
                "ld\th,(hl)\n"
                "ld\tl,a\n"
                "jp\t(hl)\n",
-               caseRange >> 8, defaultCodeLabel, caseRange & 0xff, defaultCodeLabel, swTableLabel);
+               (unsigned)(caseRange >> 8), defaultCodeLabel, 
+               (unsigned)(caseRange & 0xff), defaultCodeLabel, 
+               (unsigned)swTableLabel);
         prPsect(P_DATA);
         printf("S%d:\n", swTableLabel);
         codeLabel = 0;
@@ -1853,7 +1894,7 @@ void parseSwitch()
                 if (!hiTest)
                 {
                     printf("ld\ta,h\n");
-                    sub_1420(l7 >> 8);
+                    sub_1420((int)(l7 >> 8));
                     printf("jp\tnz,1f\n"
                            "ld\ta,l\n");
                     hiTest = true;
@@ -1867,7 +1908,7 @@ void parseSwitch()
                     if (hiTest)
                         printf("1:\n");
                     printf("ld\ta,l\n"); /* m17: */
-                    sub_1420(l7 & 0xFF);
+                    sub_1420((int)(l7 & 0xFF));
                     printf("jp\tnz,1f\n"
                            "ld\ta,h\n");
                     loTest = true;
@@ -1875,7 +1916,7 @@ void parseSwitch()
                 caseVals[codeLabel] >>= 8;
                 caseVals[codeLabel] &= 0xFF;
             }
-            sub_1420(caseVals[codeLabel]); /* m19: */
+            sub_1420((int)caseVals[codeLabel]); /* m19: */
             printf("jp\tz,l%d\n", codeLabels[codeLabel]);
         }
         if (hiTest | loTest)
@@ -2373,9 +2414,9 @@ void parseEnum()
         pMember->vals[pMember->cnt++] = (uint16_t)l1a->info.l;
 
         if (lobnd < l1a->info.l)
-            lobnd = l1a->info.l;
+            lobnd = (int)l1a->info.l;
         if (l1a->info.l < hibnd)
-            hibnd = l1a->info.l;
+            hibnd = (int)l1a->info.l;
         sub_475C(l1a);
     }
 }
@@ -2442,7 +2483,7 @@ void sub_1CEF(register member_t *sb)
                         l4b->b_off = (l1 += 2);
                     l3 = 0;
                 }
-                l4b->bOffset = l3;
+                l4b->bOffset = (uint8_t)l3;
                 l3 += l4b->bWidth;
                 if (l3 == 32)
                 {
@@ -2703,7 +2744,7 @@ int sub_1F4B(node_t *p1a, int p2, int p3, int p4, int *p5)
                 if (n == 0 && (n = sub_6589(m, sz->c_2)) == 0)
                     continue;
             }
-            p1a->a_uc9[p1a->a_c1] = n;
+            p1a->a_uc9[p1a->a_c1] = (uint8_t)n;
         }
         else
             p1a->a_uc9[p1a->a_c1] = 0;
@@ -2712,11 +2753,11 @@ int sub_1F4B(node_t *p1a, int p2, int p3, int p4, int *p5)
         n = (uint8_t)sub_2B79(p1a);
         
         if (p1a->a_c1 > 0 && p1a->a_c1 <= sizeof(p1a->a_reg)) {
-            p1a->a_reg[p1a->a_c1 - 1] = n;
+            p1a->a_reg[p1a->a_c1 - 1] = (uint8_t)n;
         }
         
         if (n == 0 && p1a->a_c0 == USEREG)
-            p1a->a_reg[p1a->a_c1 - 1] = n = p1a->info.l;
+            p1a->a_reg[p1a->a_c1 - 1] = n = (uint8_t)p1a->info.l;
         /* clang-format off */
         if ((p4 != 0 && !TopBitSet(p4) && (n == 0 || sub_6589(MapVal(p4), n) != n)) ||
             (TopBitSet(p4) && (MapVal(p4) & MapVal(n)) != MapVal(n))) {
@@ -2797,7 +2838,7 @@ int sub_283E(register node_t *sa, int par)
                 l6 = l3a->a_c1 - 1;
                 break;
             default:
-                fprintf(stderr, "%s: line %d - internal error\n", __FILE__, __LINE__);
+                fprintf(stderr, "%s: line %d - internal error\n", "cgen.c", __LINE__);
                 exit(1);
             }
             if (ch == 'S')
@@ -2816,7 +2857,7 @@ int sub_283E(register node_t *sa, int par)
             }
             l7 |= array_AAE8[ch];
             if (ch != 0)
-                byte_AFFA = ch;
+                byte_AFFA = (char)ch;
             break;
         case 'A':
         case 'B':
@@ -2883,9 +2924,9 @@ uint8_t sub_2B79(register node_t *sa)
     l1 = sa->a_uc9[sa->a_c1 - 1];
     byte_AFFA = 0;
     l2 = sub_2B2A(sa);
-    if (l1 != 0 && sub_6589(l2, l1) == l1)
+    if (l1 != 0 && sub_6589(l2, (int)l1) == l1)
         return l1;
-    return byte_AFFA;
+    return (uint8_t)byte_AFFA;
 }
 /* end of file sym3.c */
 /*
@@ -2927,7 +2968,7 @@ long sub_2C5E(node_t *sa, long p2)
 {
     char loc;
 
-    if ((loc = nodesize(sa) * 8) >= 32)
+    if ((loc = (char)nodesize(sa) * 8) >= 32)
         return p2;
     if (p2 & (1L << (loc - 1)))
         p2 |= ~((1L << loc) - 1L);
@@ -3043,7 +3084,7 @@ void sub_2D09(register node_t *sa, char *p2, char p3)
             {
                 if (isdigit(*++p2))
                 {
-                    lc5 = atoi(p2);
+                    lc5 = (char)atoi(p2);
                     if (ch == '-')
                         lc5 = -lc5;
                     ch = 0;
@@ -3091,24 +3132,24 @@ void sub_2D09(register node_t *sa, char *p2, char p3)
             if (p3 > 0)
             { /* m27: */
                 la2 = sa;
-                lc10 = p3 - 1;
+                lc10 = (uint8_t)(p3 - 1);
                 lz1 = &codeFrag[sa->a_c3[lc10]];
             }
             else
             {
                 la2 = sa->info.np[0];
-                lc10 = la2->a_c1 - 1;
+                lc10 = (uint8_t)(la2->a_c1 - 1);
                 lz1 = &codeFrag[la2->a_c3[lc10]];
             }
             break;
         case 'R':
             la2 = sa->info.np[1];
-            lc10 = la2->a_c1 - 1;
+            lc10 = (uint8_t)(la2->a_c1 - 1);
             lz1 = &codeFrag[la2->a_c3[lc10]];
             break;
         case 'N':
             la2 = sa;
-            lc10 = p3;
+            lc10 = (uint8_t)p3;
             break;
         }
         switch (lc7)
@@ -3132,12 +3173,12 @@ void sub_2D09(register node_t *sa, char *p2, char p3)
         proff:
             if (ch == 0)
             {
-                lc5 += word_AFF8;
+                lc5 += (char)word_AFF8;
                 word_AFF8 = 0;
                 if (lc5 > 0)
-                    printf("+%d", lc5);
+                    printf("+%d", (int)lc5);
                 else if (lc5 < 0)
-                    printf("%d", lc5);
+                    printf("%d", (int)lc5);
             }
             break;
         case 'F':
@@ -3145,10 +3186,10 @@ void sub_2D09(register node_t *sa, char *p2, char p3)
             goto proff;
 
         case 'Z':
-            ll9 = nodesize(la2);
+            ll9 = (long)nodesize(la2);
             goto m46;
         case 'B':
-            ll9 = sub_387A(la2);
+            ll9 = (long)sub_387A(la2);
         m46:
             if (ch == '-')
             {
@@ -3193,7 +3234,7 @@ void sub_2D09(register node_t *sa, char *p2, char p3)
             }
             else
             {
-                lc5 += word_AFF8;
+                lc5 += (char)word_AFF8;
                 word_AFF8 = 0;
                 sub_2CE0(la2, la2->info.l >> (lc5 * 8));
             }
@@ -3231,7 +3272,7 @@ void sub_2D09(register node_t *sa, char *p2, char p3)
 
             if (*p2 != '+')
             {
-                lc4 += word_AFF8;
+                lc4 += (uint8_t)word_AFF8;
                 word_AFF8 = 0;
             }
             printf("%s", regNames[lc4]);
@@ -3239,15 +3280,15 @@ void sub_2D09(register node_t *sa, char *p2, char p3)
         case '~':
             if (lc6 == 'U')
             {
-                lc5 += word_AFFB;
+                lc5 += (char)word_AFFB;
                 if ((dopetab[sa->a_c0] & 0x200) && p3 != 0)
                     lc5--;
-                printf("%d", lc5);
+                printf("%d", (int)lc5);
             }
             else
             {
-                word_AFF8 += lc5;
-                sub_2D09(la2, lz1->p_8, lc10);
+                word_AFF8 += (int)lc5;
+                sub_2D09(la2, lz1->p_8, (char)lc10);
             }
             break;
         }
@@ -3274,7 +3315,7 @@ void sub_3564(register node_t *sa)
     {
         if ((l2z = &codeFrag[sa->a_c3[l1]])->p_6)
         {
-            sub_2D09(sa, l2z->p_6, l1);
+            sub_2D09(sa, l2z->p_6, (char)l1);
             fputchar('\n');
         }
     }
@@ -3328,7 +3369,7 @@ void freeNode(register node_t *sa)
     byte_B013 = true;
     if (sa->a_c0 == FCONST)
         free(sa->info.np[0]);
-    sa->pm = nodeFreeList;
+    sa->pm = (member_t *)nodeFreeList;
     nodeFreeList = sa;
 }
 
@@ -3344,13 +3385,13 @@ node_t *allocNode(void)
     byte_B013 = true;
     if (nodeFreeList)
     {
-        sa = nodeFreeList;
+        sa = (node_t *)nodeFreeList;
         nodeFreeList = sa->pm;
         blkclr((char *)sa, sizeof(node_t));
     }
     else
     { /* create node_t */
-        sa = allocMem(sizeof(node_t));
+        sa = (node_t *)allocMem(sizeof(node_t));
     }
 
     return sa;
@@ -3365,7 +3406,7 @@ bool releaseNodeFreeList(void)
 
     if (nodeFreeList == 0)
         return false;
-    while ((sa = nodeFreeList))
+    while ((sa = (node_t *)nodeFreeList))
     {
         nodeFreeList = sa->pm;
         free(sa);
@@ -3434,7 +3475,7 @@ uint16_t sub_387A(register node_t *sa)
     sub_37ED(sa);
     loc = (uint8_t)nodesize(sa);
     sub_385B(sa);
-    return loc;
+    return (uint16_t)loc;
 }
 
 /*********************************************************
@@ -3514,7 +3555,7 @@ node_t *sub_39CA(register node_t *sa)
     {
         sprintf(buf, "%ld.", sa->info.np[0]->info.l);
         freeNode(sa->info.np[0]);
-        sa->info.sv.s = allocMem(strlen(buf) + 1); /* create string */
+        sa->info.sv.s = (char *)allocMem(strlen(buf) + 1); /* create string */
         strcpy(sa->info.sv.s, buf);
         sa->info.sv.v = newLocal();
         sa->a_c0 = FCONST;
@@ -3908,12 +3949,12 @@ node_t *parseExpr()
             }
             /* fall through */
         case 0:
-            return sub_43EF(l4, 0, 0);
+            return sub_43EF((uint8_t)l4, 0, 0);
         case 4:
-            return sub_43EF(l4, parseExpr(), 0);
+            return sub_43EF((uint8_t)l4, parseExpr(), 0);
         case 8:
             l1a = parseExpr();
-            return sub_43EF(l4, l1a, parseExpr());
+            return sub_43EF((uint8_t)l4, l1a, parseExpr());
         }
     }
 }
@@ -4090,17 +4131,17 @@ uint8_t sub_47B2(register node_t *sa, int p2)
         sa = sa->info.np[1];
         /* fall through */
     case T_SCOLON:
-        return sa->info.l >= 1L && sa->info.l < 3L;
+        return (uint8_t)(sa->info.l >= 1L && sa->info.l < 3L);
     case RPAREN:
         sa = sa->info.np[0];
         /* fall through */
     case MOD:
         if (nodesize(sa) == 2 && !sub_3968(sa))
-            return true;
+            return 1;
         break;
     case BAND:
         if (sub_14F3(sa) == 3)
-            return false;
+            return 0;
         goto m485f;
     case MUL:
         sa = sa->info.np[0];
@@ -4108,30 +4149,30 @@ uint8_t sub_47B2(register node_t *sa, int p2)
     case DOLLAR_U:
     m485f:
         if (nodesize(sa) == 4 && !sub_3968(sa))
-            return true;
+            return 1;
         break;
     case SCOLON:
         sa = sa->info.np[0];
         /* fall through */
     case DOLLAR:
-        return sub_3968(sa);
+        return (uint8_t)sub_3968(sa);
     case ADD:
-        return (uint8_t)sa->info.l == 8 || (uint8_t)sa->info.l == 9;
+        return (uint8_t)((uint8_t)sa->info.l == 8 || (uint8_t)sa->info.l == 9);
     case INCR:
         l1 = sub_2C5E(sa, sa->info.l);
-        return -128L <= l1 && l1 < 125L;
+        return (uint8_t)(-128L <= l1 && l1 < 125L);
     case COLON_U:
-        return 1L <= sa->info.l && sa->info.l < 5L;
+        return (uint8_t)(1L <= sa->info.l && sa->info.l < 5L);
     case COLON_S:
         l1 = sa->info.l;
         if (sub_14F3(sa) == 2 && (l1 & (uint16_t)(1 << ((int16_t)nodesize(sa) << 3))))
             l1 |= (uint16_t)~((1 << ((int16_t)nodesize(sa) << 3)) - 1);
-        return l1 < 0 && l1 >= -4L;
+        return (uint8_t)(l1 < 0 && l1 >= -4L);
     case LPAREN:
         sa = sa->info.np[1];
         /* fall through */
     case HASHSIGN:
-        return nodesize(sa) == 1 && !sub_3968(sa);
+        return (uint8_t)(nodesize(sa) == 1 && !sub_3968(sa));
     case MINUS_U:
         if (nodesize(sa) == 4)
             goto m49dc;
@@ -4140,26 +4181,26 @@ uint8_t sub_47B2(register node_t *sa, int p2)
         if (nodesize(sa) == 2)
         m49dc:
             if (sub_14F3(sa) != 3 && sub_14F3(sa->info.np[0]) != 3)
-                return sub_14F3(sa) == 2 || sub_14F3(sa->info.np[0]) == 2;
+                return (uint8_t)(sub_14F3(sa) == 2 || sub_14F3(sa->info.np[0]) == 2);
         break;
     case LT:
-        return sa->info.l == 0;
+        return (uint8_t)(sa->info.l == 0);
     case CONV:
         if (nodesize(sa) == 4)
         m4a48:
-            return sub_14F3(sa) == 1 && sub_14F3(sa->info.np[0]) == 1;
-        return false;
+            return (uint8_t)(sub_14F3(sa) == 1 && sub_14F3(sa->info.np[0]) == 1);
+        return 0;
 
     case SUB:
         if (nodesize(sa) == 2)
             goto m4a48;
         break;
     case PLUS_U:
-        return 1L == sa->info.l;
+        return (uint8_t)(1L == sa->info.l);
     case NOT:
-        return sub_46F7(sa->info.np[1]->info.l);
+        return (uint8_t)(sub_46F7(sa->info.np[1]->info.l));
     case NEQL:
-        return sub_46F7(~sa->info.np[1]->info.l);
+        return (uint8_t)(sub_46F7(~sa->info.np[1]->info.l));
     case COLON:
         if (nodesize(sa) == 4)
             goto m4b02;
@@ -4171,9 +4212,9 @@ uint8_t sub_47B2(register node_t *sa, int p2)
 
     case GADDR:
         if (nodesize(sa) != 1)
-            return false;
+            return 0;
     m4b02:
-        return (sub_14F3(sa) == 1 || sub_14F3(sa) == 2) && sub_14F3(sa->info.np[0]) == 3;
+        return (uint8_t)((sub_14F3(sa) == 1 || sub_14F3(sa) == 2) && sub_14F3(sa->info.np[0]) == 3);
     case DIV:
         if (nodesize(sa->info.np[0]) == 1)
             goto dotp;
@@ -4187,13 +4228,13 @@ uint8_t sub_47B2(register node_t *sa, int p2)
         {
         dotp:
             if (sub_14F3(sa) != 3)
-                return false;
+                return 0;
             else
-                return sub_14F3(sa->info.np[0]) == 1 || sub_14F3(sa->info.np[0]) == 2;
+                return (uint8_t)(sub_14F3(sa->info.np[0]) == 1 || sub_14F3(sa->info.np[0]) == 2);
         }
         break;
     case LAND:
-        return sub_14F3(sa) == 3;
+        return (uint8_t)(sub_14F3(sa) == 3);
     }
     return 0;
 }
@@ -4261,7 +4302,7 @@ node_t *sub_4C8B(register node_t *sa)
     if ((dopetab[l1->a_c0] & 0x12C) == 0x28)
     {
         freeNode(sa);
-        l1->a_c0 = invertTest(l1->a_c0);
+        l1->a_c0 = (uint8_t)invertTest(l1->a_c0);
         return l1;
     }
     if (dopetab[l1->a_c0] & 0x20)
@@ -4404,7 +4445,7 @@ node_t *sub_508A(register node_t *sa)
         freeNode(sa->info.np[0]);
         freeNode(sa->info.np[1]);
         sprintf(buf, "%ld", l3);
-        sa->info.sv.s = allocMem(strlen(buf) + 1); /* create string */
+        sa->info.sv.s = (char *)allocMem(strlen(buf) + 1); /* create string */
         strcpy(sa->info.sv.s, buf);
         sa->info.sv.v = newLocal();
         sa->a_c0 = FCONST;
@@ -4786,7 +4827,7 @@ node_t *sub_5DF6(register node_t *sa)
     char l1;
     char *l2;
 
-    l1 = dopetab[sa->a_c0] & 0xC;
+    l1 = (char)(dopetab[sa->a_c0] & 0xC);
     if (l1 == 8)
         sa->info.np[1] = sub_5DF6(sa->info.np[1]);
     if (l1 != 0)
@@ -4814,7 +4855,7 @@ node_t *sub_5DF6(register node_t *sa)
         {
             freeNode(sa);
             sa = sa->info.np[0];
-            l2 = allocMem(strlen(sa->info.sv.s) + 2);
+            l2 = (char *)allocMem(strlen(sa->info.sv.s) + 2);
             strcat(strcpy(l2, "-"), sa->info.sv.s);
             free(sa->info.sv.s);
             sa->info.sv.s = l2;
@@ -4831,7 +4872,7 @@ node_t *sub_5F52(register node_t *sa)
     char l1;
     node_t *l2;
 
-    l1 = dopetab[sa->a_c0] & 0xC;
+    l1 = (char)(dopetab[sa->a_c0] & 0xC);
     if (l1 == 8)
         sa->info.np[1] = sub_5F52(sa->info.np[1]);
     if (l1 != 0)
@@ -4930,7 +4971,7 @@ bool sub_60A8(register node_t *sa, node_t *p2a)
     if (sa->a_c0 != 'C')
         return 0;
     if (nodesize(p2a) >= 4)
-        return sa->info.l >= 0 || sub_14F3(p2a) == 1;
+        return (bool)(sa->info.l >= 0 || sub_14F3(p2a) == 1);
 
     l1 = (uint16_t)(1 << (nodesize(p2a) * 8));
     if (sub_14F3(p2a) == 2)
@@ -4942,9 +4983,9 @@ bool sub_60A8(register node_t *sa, node_t *p2a)
     {
         l1 /= 2;
         if (sa->info.l < 0)
-            return sa->info.l >= -l1;
+            return (bool)(sa->info.l >= -l1);
     }
-    return sa->info.l < l1;
+    return (bool)(sa->info.l < l1);
 }
 
 /*********************************************************
@@ -4960,7 +5001,7 @@ bool sub_61AA(register member_t *sb, int p2)
         if (sb->b_flag == 5)
             sb->b_sloc |= 4;
         sb->b_flag = 2;
-        sb->b_memb.i = sub_6589(word_B017, 9);
+        sb->b_memb.i = (int16_t)sub_6589(word_B017, 9);
         word_B017 &= ~array_AAE8[sb->b_memb.i];
         return true;
     }
@@ -4993,7 +5034,7 @@ bool sub_62BE(register node_t *sa, node_t *p2a)
     long l1, l2;
     char l3;
 
-    l3 = nodesize(sa->info.np[0]) * 8;
+    l3 = (char)(nodesize(sa->info.np[0]) * 8);
     if (l3 >= 32)
         return true;
     l1 = 1L << l3;
@@ -5003,7 +5044,7 @@ bool sub_62BE(register node_t *sa, node_t *p2a)
         l1 /= 2;
         l2 = -l1;
     }
-    return l2 <= p2a->info.l && p2a->info.l < l1;
+    return (bool)(l2 <= p2a->info.l && p2a->info.l < l1);
 }
 
 /* macros to make reading the code easier */
@@ -5039,7 +5080,7 @@ uint8_t sub_63B8(int p1, int p2, int p3)
     {
         if ((l1 = sub_6589(MapVal(p2) & p1, p3)) == 0 && (l2 = sub_6589(p1, p3)) != 0 &&
             sub_6589(MapVal(l2), p2) != 0)
-            l1 = l2;
+            l1 = (uint8_t)l2;
     }
     else
     {
@@ -5072,7 +5113,7 @@ uint8_t sub_6589(int p1, int p2)
     if (p2 < 24)
     {
         if ((p1 & array_AAE8[p2]) == array_AAE8[p2])
-            return p2;
+            return (uint8_t)p2;
         else
             return 0;
     }
@@ -5138,7 +5179,7 @@ int sub_66BC(int p1, int p2, int p3, char *p4)
             {
                 do
                 {
-                    p2 = sub_665B(p2, (uint8_t)*l3);
+                    p2 = sub_665B((uint16_t)p2, (uint8_t)*l3);
                 } while (l3-- != p4);
                 retval = p2;
             }
@@ -5148,7 +5189,7 @@ int sub_66BC(int p1, int p2, int p3, char *p4)
         retval = p1;
     else
     {
-        l1 = ((p1 & 0x8000) ? ~p1 : array_AAE8[p1]) & ((p2 & 0x8000) ? ~p2 : array_AAE8[p2]);
+        l1 = (int16_t)(((p1 & 0x8000) ? ~p1 : array_AAE8[p1]) & ((p2 & 0x8000) ? ~p2 : array_AAE8[p2]));
         if (((p1 & 0x8000) ? ~p1 : array_AAE8[p1]) == l1)
             retval = p1;
         else if (((p2 & 0x8000) ? ~p2 : array_AAE8[p2]) == l1)
@@ -5207,6 +5248,21 @@ int main(int argc, char **argv)
         }
         argv++, argc--;
     }
+#ifdef CPM
+    if (argc-- > 0)
+    {
+        if (freopen(*argv, "r", 0) == 0) /* Open input file */
+            fatalErr("Can't open %s", *argv);
+        else if (argc > 0 && freopen(argv[1], "w", 1) == 0) /* Open output file */
+            fatalErr("Can't create %s", argv[1]);
+    }
+    sub_1680();  /* First_init */
+    parseStmt(); /* Compiling intermediate code */
+    if (fclose(1) == (-1))
+    { /* Close output file */
+        prError("Error closing output file");
+    }
+#else
     if (argc-- > 0)
     {
         if (freopen(*argv, "r", stdin) == NULL) /* Open input file */
@@ -5220,6 +5276,7 @@ int main(int argc, char **argv)
     { /* Close output file */
         prError("Error closing output file");
     }
+#endif
     /* Exit with error code */
     exit(errcnt != 0); /* Generated code is not significantly different */
 }
@@ -5237,13 +5294,18 @@ int main(int argc, char **argv)
  *********************************************************/
 _Noreturn void fatalErr(char *fmt, ...)
 {
+#ifdef CPM
+    prMsg(fmt, (char *)&((&fmt)[1]));
+    fclose(1);
+    exit(2);
+#else
     va_list args;
     va_start(args, fmt);
-
     prMsg(fmt, args);
     va_end(args);
     fclose(stdout);
     exit(2);
+#endif
 }
 
 /*********************************************************
@@ -5253,15 +5315,20 @@ _Noreturn void fatalErr(char *fmt, ...)
  *********************************************************/
 void prWarning(char *fmt, ...)
 {
-    va_list args;
-
     if (wflag == 0)
     {
+#ifdef CPM
+        fprintf(2, "%s:%d:\t", progname, lineno);
+        _doprnt(2, fmt, (char *)&((&fmt)[1]));
+        fprintf(2, " (warning)\n");
+#else
+        va_list args;
         fprintf(stderr, "%s:%d:\t", progname, lineno);
         va_start(args, fmt);
         vfprintf(stderr, fmt, args);
         va_end(args);
         fprintf(stderr, " (warning)\n");
+#endif
     }
 }
 
@@ -5272,10 +5339,14 @@ void prWarning(char *fmt, ...)
  *********************************************************/
 void prError(char *fmt, ...)
 {
+#ifdef CPM
+    prMsg(fmt, (char *)&((&fmt)[1]));
+#else
     va_list args;
     va_start(args, fmt);
     prMsg(fmt, args);
     va_end(args);
+#endif
     if (++errcnt >= MAXERR)
         fatalErr("Too many errors");
 }
@@ -5284,12 +5355,21 @@ void prError(char *fmt, ...)
  * prMsg OK PMO	      	  Used in: ferror, prError
  * Difference due to use of stdarg
  *********************************************************/
+#ifdef CPM
+void prMsg(char *fmt, char *args)
+{
+    fprintf(2, "%s:%d:\t", progname, lineno);
+    _doprnt(2, fmt, args);
+    fputc('\n', 2);
+}
+#else
 void prMsg(char *fmt, va_list args)
 {
     fprintf(stderr, "%s:%d:\t", progname, lineno);
     vfprintf(stderr, fmt, args);
     fputc('\n', stderr);
 }
+#endif
 
 /*********************************************************
  * allocMem OK    Used in: sub_265,  sub_1754, sub_19C1,
@@ -5344,13 +5424,13 @@ static uint8_t *setSize(register uint8_t *p, short size)
 {
     if (size > 0x80)
     {
-        *((uint16_t *)p) = size - 3;
+        *((uint16_t *)p) = (uint16_t)(size - 3);
         p += 3;
         p[-1] = 0x80;
     }
     else
     {
-        *p = (uint8_t)size - 1;
+        *p = (uint8_t)(size - 1);
         p++;
     }
     return p;
@@ -5367,17 +5447,17 @@ static bool pack()
 
     packed = false;
 rescan:
-    for (curHi = &freeList; hiblk = *curHi; curHi = &Link(hiblk))
+    for (curHi = &freeList; (hiblk = *curHi) != 0; curHi = (uint8_t **)&Link(hiblk))
     {
         hiblkAddr = BlkAddr(hiblk); /* optimised over original */
-        for (curLo = &freeList; loblk = *curLo; curLo = &Link(loblk))
+        for (curLo = &freeList; (loblk = *curLo) != 0; curLo = (uint8_t **)&Link(loblk))
         {
             if (hiblkAddr != loblk + Len(loblk)) /* loop until we find adjacent blocks */
                 continue;
             /* unlink the blocks to be joined */
-            if (&Link(hiblk) == curLo)      /* free list order is hi lo next */
+            if ((uint8_t **)&Link(hiblk) == curLo)      /* free list order is hi lo next */
                 *curHi = Link(loblk);       /* move the next info to the hi block */
-            else if (curHi == &Link(loblk)) /* free list order is low hi next */
+            else if (curHi == (uint8_t **)&Link(loblk)) /* free list order is low hi next */
                 *curLo = Link(hiblk);       /* move the next info to the lo block */
             else
             {                         /* not adjacent in freelist */
@@ -5385,7 +5465,7 @@ rescan:
                 *curHi = Link(hiblk); /* move the hi -> next info */
             }
             loblk = BlkAddr(loblk);                           /* make sure we also include the header */
-            free(setSize(loblk, hiblk + Len(hiblk) - loblk)); /* join the blocks */
+            free(setSize(loblk, (short)(hiblk + Len(hiblk) - loblk))); /* join the blocks */
             packed = true;
             goto rescan;
         }
@@ -5414,7 +5494,7 @@ void *malloc(size_t size)
      */
     do
     {
-        for (sst = (uint8_t *)&freeList; l1 = Link(sst); sst = l1)
+        for (sst = (uint8_t *)&freeList; (l1 = Link(sst)) != 0; sst = l1)
         {
             if (Len(l1) >= size)
             {
@@ -5425,9 +5505,9 @@ void *malloc(size_t size)
                 if ((l2 = Len(sst)) > size + 2 + sizeof(uint8_t *))
                 { /* ? +1 ok */
                     l1 = sst + size;
-                    free(setSize(l1, l2 - size));
+                    free(setSize(l1, (short)(l2 - size)));
                     sst = BlkAddr(sst);
-                    return setSize(sst, size);
+                    return setSize(sst, (short)size);
                 }
                 else
                     return sst;
@@ -5435,10 +5515,10 @@ void *malloc(size_t size)
         }
     } while (!done && (done = pack()));
     l2 = size < 128 ? 1 : 3; /* size of block header */
-    if ((sst = sbrk(size + l2)) == (uint8_t *)-1)
+    if ((sst = sbrk((int)(size + l2))) == (uint8_t *)-1)
         return 0;
 
-    return setSize(sst, size + l2);
+    return setSize(sst, (short)(size + l2));
 }
 
 /*********************************************************
@@ -5463,7 +5543,6 @@ void free(void *p)
  * File - getchar.c
  * simple file used for function versions of getchar & putchar
  */
-#
 #ifdef CPM
 int fgetchar()
 {
@@ -5471,11 +5550,11 @@ int fgetchar()
 }
 int fputchar(int c)
 {
-    fputc(c, stdout);
+    return fputc(c, stdout);
 }
 #else
 #if !defined(_WIN32)
-/* assume unix convention and ingore \r on input and add \r on output */
+/* assume unix convention and ignore \r on input and add \r on output */
 int fgetchar()
 {
     int c;

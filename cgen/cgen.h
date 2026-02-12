@@ -1,33 +1,5 @@
 #ifndef _CGEN_H
 #define _CGEN_H 1
-/* File cgen.h Created 17.05.2019 Last Modified 17.06.2020 */
-
-/* Not a commercial goal of this laborious work is to popularize among
- * potential fans of 8-bit computers the old HI-TECH C compiler V3.09
- * (HI-TECH Software) and extend its life, outside of the CP/M environment
- * (Digital Research, Inc), for full operation in a  Unix-like operating
- * system UZI-180 without using the CP/M emulator.
- *
- * The HI-TECH C compiler V3.09 is provided free of charge for any use,
- * private or commercial, strictly as-is. No warranty or product support
- * is offered or implied including merchantability, fitness for a particular
- * purpose, or non-infringement. In no event will HI-TECH Software or its
- * corporate affiliates be liable for any direct or indirect damages.
- *
- * You may use this software for whatever you like, providing you acknowledge
- * that the copyright to this software remains with HI-TECH Software and its
- * corporate affiliates.
- *
- * All copyrights to the algorithms used, binary code, trademarks, etc.
- * belong to the legal owner - Microchip Technology Inc. and its subsidiaries.
- * Commercial use and distribution of recreated source codes without permission
- * from the copyright holderis strictly prohibited.
- *
- * The solution to this problem is to recreate the object code being moved,
- * replace the CP/M system functions (I/O, memory allocation, etc.) with
- * similar UZI-180 calls, and compile an executable file for this operating
- * system.
- */
 
 /*
 #define DEBUG
@@ -485,7 +457,11 @@ int sub_66BC(int, int, int, char *);
 _Noreturn void fatalErr(char *fmt, ...); /* ok   sub_6AA2.c	*/
 void prWarning(char *fmt, ...);          /* ok sub_6AD0*/
 void prError(char *fmt, ...);            /* ok sub_6B1D.c	*/
+#ifdef CPM
+void prMsg(char *fmt, char *args);
+#else
 void prMsg(char *fmt, va_list args);
+#endif
 void *allocMem(size_t); /*sub_6B9B*/ /* ok sub_6B9B.c	*/
 /* end of function declarations */
 #endif

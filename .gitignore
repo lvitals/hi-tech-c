@@ -2,6 +2,7 @@
 .vscode
 cgen/*.o
 cgen/cgen
+cgen/cgen.com
 cgen/*.i
 cgen/*.s
 cgen/*.tmp.*

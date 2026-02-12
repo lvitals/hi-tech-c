@@ -1,0 +1,45 @@
+# Makefile.z80 for building cgen.com for Z80 CP/M
+
+# Paths to host tools
+HOST_CPP = ../cpp/cpp
+HOST_P1 = ../p1/p1
+HOST_CGEN = ./cgen
+HOST_OPTIM = ../optim/optim
+HOST_ZAS = ../zas/zas
+HOST_LINK = ../link/link
+HOST_CPM = ../cpm/cpm
+
+# Source files for cgen (these are compiled for Z80 CP/M)
+CGEN_SRCS = cgen.c
+CGEN_OBJS = $(CGEN_SRCS:.c=.obj)
+
+# Shared include and library paths
+SHARE_INCLUDE = ../share/include
+SHARE_LIB = ../share/lib
+
+# CP/M runtime libraries
+CRTCPM_OBJ = $(SHARE_LIB)/crtcpm.obj
+LIBC_LIB = $(SHARE_LIB)/libc.lib
+LIBF_LIB = $(SHARE_LIB)/libf.lib
+
+TARGET = cgen.com
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(CGEN_OBJS)
+	@echo "Step: Linking $(TARGET)"
+	$(HOST_LINK) -z -ptext=0,data,bss -c100h -o$@ $(CRTCPM_OBJ) $(CGEN_OBJS) $(LIBC_LIB) $(LIBF_LIB)
+
+%.obj: %.c
+	@echo "Step: Compiling $< for Z80"
+	$(HOST_CPP) -DCPM -Dhi_tech_c -Dz80 -I $(SHARE_INCLUDE) $< $*.i
+	$(HOST_P1) $*.i $*.tmp.p1
+	$(HOST_CGEN) $*.tmp.p1 $*.tmp.s.unopt
+	$(HOST_OPTIM) $*.tmp.s.unopt $*.s
+	$(HOST_ZAS) -n -o$@ $*.s
+
+clean:
+	rm -f $(CGEN_OBJS) $(TARGET)
+	rm -f *.i *.tmp.p1 *.tmp.s.unopt *.s
